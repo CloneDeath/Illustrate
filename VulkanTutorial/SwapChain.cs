@@ -1,13 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Net.Mime;
 using Illustrate;
 using Illustrate.Vulkan;
 using VulkanSharp;
 
 namespace VulkanTutorial
 {
-	public class SwapChain
+	public class SwapChain : IDisposable
 	{
 		public List<SwapChainBuffer> Buffers { get; set; }
 		public Format ColorFormat { get; set; }
@@ -119,12 +119,111 @@ namespace VulkanTutorial
 
 		public void Create(CommandBuffer commandBuffer) {
 			var surfaceCapabilities = PhysicalDevice.GetSurfaceCapabilitiesKHR(Surface);
-			var presentModes = PhysicalDevice.GetSurfacePresentModesKHR(Surface);
-
 			Extent2D swapChainExtend = new Extent2D {
 				Width = surfaceCapabilities.CurrentExtent.Width,
 				Height = surfaceCapabilities.CurrentExtent.Height
 			};
+
+			var presentModes = PhysicalDevice.GetSurfacePresentModesKHR(Surface);
+			PresentModeKhr presentMode = GetBestPresentMode(presentModes);
+
+			var desiredImages = surfaceCapabilities.MinImageCount + 1;
+			if (surfaceCapabilities.MaxImageCount > 0 && desiredImages > surfaceCapabilities.MaxImageCount) {
+				desiredImages = surfaceCapabilities.MaxImageCount;
+			}
+
+			var preTransform = surfaceCapabilities.CurrentTransform;
+			if (surfaceCapabilities.SupportedTransforms.HasFlag(SurfaceTransformFlagsKhr.Identity)) {
+				preTransform = SurfaceTransformFlagsKhr.Identity;
+			}
+
+			var oldSwapChain = Swapchain;
+			var swapChainCreateInfo = new SwapchainCreateInfoKhr {
+				Surface = Surface,
+				MinImageCount = desiredImages,
+				ImageFormat = ColorFormat,
+				ImageColorSpace = ColorSpace,
+				ImageExtent = swapChainExtend,
+				ImageUsage = ImageUsageFlags.ColorAttachment,
+				PreTransform = preTransform,
+				ImageArrayLayers = 1,
+				ImageSharingMode = SharingMode.Exclusive,
+				QueueFamilyIndexCount = 0,
+				QueueFamilyIndices = null,
+				PresentMode = presentMode,
+				Clipped = true,
+
+				// Alpha on the window surface should be opaque:
+				// If it was not we could create transparent regions of our window which
+				// would require support from the Window compositor. You can totally do
+				// that if you wanted though ;)
+				CompositeAlpha = CompositeAlphaFlagsKhr.Opaque
+			};
+			Swapchain = Device.CreateSwapchainKHR(swapChainCreateInfo);
+
+			if (oldSwapChain != null) {
+				Device.DestroySwapchainKHR(oldSwapChain);
+			}
+
+			Images = Device.GetSwapchainImagesKHR(Swapchain).ToList();
+
+			// Create the image views for the swap chain. They will all be single
+			// layer, 2D images, with no mipmaps.
+			// Check the VkImageViewCreateInfo structure to see other views you
+			// can potentially create.
+			for (var i = 0; i < Images.Count; i++) {
+				var buffer = new SwapChainBuffer();
+
+				var colorAttachmentView = new ImageViewCreateInfo {
+					Format = ColorFormat,
+					Components = new ComponentMapping {
+						R = ComponentSwizzle.R,
+						G = ComponentSwizzle.G,
+						B = ComponentSwizzle.B,
+						A = ComponentSwizzle.A
+					},
+					SubresourceRange = new ImageSubresourceRange {
+						AspectMask = ImageAspectFlags.Color,
+						BaseMipLevel = 0,
+						LevelCount = 1,
+						BaseArrayLayer = 0,
+						LayerCount = 1
+					},
+					ViewType = ImageViewType.View2D
+				};
+				buffer.Image = Images[i];
+				SetImageLayout(commandBuffer, buffer.Image, ImageAspectFlags.Color, ImageLayout.Undefined, ImageLayout.PresentSrcKhr);
+				buffer.View = Device.CreateImageView(colorAttachmentView);
+				Buffers.Add(buffer);
+			}
+		}
+
+		private static PresentModeKhr GetBestPresentMode(IEnumerable<PresentModeKhr> presentModes) {
+			if (presentModes.Contains(PresentModeKhr.Mailbox)) return PresentModeKhr.Mailbox;
+			if (presentModes.Contains(PresentModeKhr.FifoRelaxed)) return PresentModeKhr.FifoRelaxed;
+			if (presentModes.Contains(PresentModeKhr.Fifo)) return PresentModeKhr.Fifo;
+			return presentModes.First();
+		}
+
+		public int AcquireNext(Semaphore presentCompleteSemaphore) {
+			return (int)Device.AcquireNextImageKHR(Swapchain, ulong.MaxValue, presentCompleteSemaphore, null);
+		}
+
+		public void QueuePresent(Queue queue, int currentBuffer) {
+			var presentInfo = new PresentInfoKhr {
+				SwapchainCount = 1,
+				Swapchains = new[] {Swapchain},
+				ImageIndices = new []{(uint)currentBuffer},
+			};
+			queue.PresentKHR(presentInfo);
+		}
+
+		public void Dispose() {
+			foreach (var buffer in Buffers) {
+				Device.DestroyImageView(buffer.View);
+			}
+			Device.DestroySwapchainKHR(Swapchain);
+			Instance.DestroySurfaceKHR(Surface);
 		}
 	}
 }
