@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Windows.Forms;
+using Illustrate.Windows;
 using VulkanSharp;
-using VulkanSharp.Windows;
 using Version = VulkanSharp.Version;
 
 namespace VulkanTutorial
@@ -29,50 +27,28 @@ namespace VulkanTutorial
 				EnabledExtensionCount = 2,
 				EnabledExtensionNames = new [] {
 					Extension.KhrSurface,
-					Extension.KhrWin32Surface,
+					Extension.KhrWin32Surface
 				}
 			};
 			var instance = new Instance(instanceInfo);
 			var devices = instance.EnumeratePhysicalDevices();
-			foreach (var physicalDevice in devices) {
-				PrintDeviceInformation(physicalDevice);
+			foreach (var dev in devices) {
+				PrintDeviceInformation(dev);
 			}
 
-			var selectedDevice = devices.First();
-			var device = CreateAbstractDevice(selectedDevice);
+			var physicalDevice = devices.First();
+			var device = CreateAbstractDevice(physicalDevice);
 			
-			var form = new Form();
-			form.Show();
+			var window = new Window();
+			window.Show();
+
+			var swapChain = new SwapChain(instance, physicalDevice, device);
+			swapChain.Initialize(window);
+			swapChain.Create(null);
 			
-			var surfaceCreateInfo = new Win32SurfaceCreateInfoKhr
-			{
-				Hwnd = form.Handle,
-				Hinstance = Marshal.GetHINSTANCE(typeof(Form).Module)
-			};
-			var surfaceKhr = instance.CreateWin32SurfaceKHR(surfaceCreateInfo, null);
-
-			var formats = selectedDevice.GetSurfaceFormatsKHR(surfaceKhr);
-
-			Format colorFormat;
-			if (formats.Length == 1 && formats.First().Format == Format.Undefined) {
-				colorFormat = Format.B8G8R8A8Unorm;
-			}
-			else {
-				colorFormat = formats.First().Format;
-			}
-			var colorSpace = formats.First().ColorSpace;
-
-			
-
-			instance.Destroy(null);
+			instance.Destroy();
 
 			Console.ReadLine();
-		}
-
-		private class SwapChainBuffer
-		{
-			public Image Image { get; set; }
-			public ImageView View { get; set; }
 		}
 
 		private static void PrintDeviceInformation(PhysicalDevice physicalDevice) {
@@ -123,7 +99,7 @@ namespace VulkanTutorial
 				QueueCreateInfos = new[] { deviceQueueInfo }
 			};
 
-			return physicalDevice.CreateDevice(deviceInfo, null);
+			return physicalDevice.CreateDevice(deviceInfo);
 		}
 	}
 }
