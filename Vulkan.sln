@@ -3,15 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vulkan", "Vulkan\Vulkan.csproj", "{8D35B673-309B-4AAC-B969-E1A966735E6A}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vulkan.Tests", "Vulkan.Tests\Vulkan.Tests.csproj", "{2D237115-CD44-4E15-A098-D0F6762FC464}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VulkanTutorial", "VulkanTutorial\VulkanTutorial.csproj", "{432B9B13-361F-49F2-8410-B92D82706C76}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Illustrate", "Illustrate\Illustrate.csproj", "{D2E4FD06-A055-438C-B4E8-AD0E36BA042D}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Illustrate.Windows.HelloTriangle", "Illustrate.HelloTriangle\Illustrate.Windows.HelloTriangle.csproj", "{0B837DA0-0210-4400-9F65-47E6CC9F2AB6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Illustrate.Windows", "Illustrate.Windows\Illustrate.Windows.csproj", "{61CBD534-45E6-469F-9DF4-22ADCF4E6451}"
 EndProject
@@ -23,14 +17,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{8D35B673-309B-4AAC-B969-E1A966735E6A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8D35B673-309B-4AAC-B969-E1A966735E6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8D35B673-309B-4AAC-B969-E1A966735E6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8D35B673-309B-4AAC-B969-E1A966735E6A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2D237115-CD44-4E15-A098-D0F6762FC464}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2D237115-CD44-4E15-A098-D0F6762FC464}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2D237115-CD44-4E15-A098-D0F6762FC464}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2D237115-CD44-4E15-A098-D0F6762FC464}.Release|Any CPU.Build.0 = Release|Any CPU
 		{432B9B13-361F-49F2-8410-B92D82706C76}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{432B9B13-361F-49F2-8410-B92D82706C76}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{432B9B13-361F-49F2-8410-B92D82706C76}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -39,10 +25,6 @@ Global
 		{D2E4FD06-A055-438C-B4E8-AD0E36BA042D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D2E4FD06-A055-438C-B4E8-AD0E36BA042D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D2E4FD06-A055-438C-B4E8-AD0E36BA042D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0B837DA0-0210-4400-9F65-47E6CC9F2AB6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0B837DA0-0210-4400-9F65-47E6CC9F2AB6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0B837DA0-0210-4400-9F65-47E6CC9F2AB6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0B837DA0-0210-4400-9F65-47E6CC9F2AB6}.Release|Any CPU.Build.0 = Release|Any CPU
 		{61CBD534-45E6-469F-9DF4-22ADCF4E6451}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{61CBD534-45E6-469F-9DF4-22ADCF4E6451}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{61CBD534-45E6-469F-9DF4-22ADCF4E6451}.Release|Any CPU.ActiveCfg = Release|Any CPU
