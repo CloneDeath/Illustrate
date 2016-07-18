@@ -12,5 +12,7 @@ namespace Illustrate
 	    void HandleEvents();
 
 	    SurfaceKhr CreateSurface(Instance instance);
+
+		Size Size { get; set; }
     }
 }

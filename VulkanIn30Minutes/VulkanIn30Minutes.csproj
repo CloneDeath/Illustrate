@@ -4,15 +4,16 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{D2E4FD06-A055-438C-B4E8-AD0E36BA042D}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <ProjectGuid>{DC13E58B-780A-43B4-8D2A-B71E97D1712F}</ProjectGuid>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Illustrate</RootNamespace>
-    <AssemblyName>Illustrate</AssemblyName>
+    <RootNamespace>VulkanIn30Minutes</RootNamespace>
+    <AssemblyName>VulkanIn30Minutes</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -22,6 +23,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -32,7 +34,6 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Drawing" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -49,12 +50,26 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IWindow.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Size.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="App.config" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Illustrate.Vulkan\Illustrate.Vulkan.csproj">
+      <Project>{640e41f4-0d45-48f4-b98a-8b7eebdb0870}</Project>
+      <Name>Illustrate.Vulkan</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Illustrate.Windows\Illustrate.Windows.csproj">
+      <Project>{61CBD534-45E6-469F-9DF4-22ADCF4E6451}</Project>
+      <Name>Illustrate.Windows</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Illustrate\Illustrate.csproj">
+      <Project>{d2e4fd06-a055-438c-b4e8-ad0e36ba042d}</Project>
+      <Name>Illustrate</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

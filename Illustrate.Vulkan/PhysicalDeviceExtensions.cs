@@ -7,15 +7,15 @@ namespace Illustrate.Vulkan
 	{
 		public static QueueFamilyPropertiesExt[] GetQueueFamilyPropertiesExt(this PhysicalDevice self) {
 			var queueProperties = self.GetQueueFamilyProperties();
-			return queueProperties.Select((q, i) => new QueueFamilyPropertiesExt(q, i, self)).ToArray();
+			return queueProperties.Select((q, i) => new QueueFamilyPropertiesExt(q, (uint)i, self)).ToArray();
 		}
 	}
 
 	public class QueueFamilyPropertiesExt
 	{
-		public int QueueIndex { get; }
+		public uint QueueIndex { get; }
 
-		public QueueFamilyPropertiesExt(QueueFamilyProperties child, int queueIndex, PhysicalDevice physicalDevice) {
+		public QueueFamilyPropertiesExt(QueueFamilyProperties child, uint queueIndex, PhysicalDevice physicalDevice) {
 			QueueIndex = queueIndex;
 			Handle = child;
 			PhysicalDevice = physicalDevice;

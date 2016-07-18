@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using VulkanSharp;
 using VulkanSharp.Windows;
@@ -49,6 +50,17 @@ namespace Illustrate.Windows
 			    Hwnd = _form.Handle,
 			    Hinstance = Marshal.GetHINSTANCE(typeof(Form).Module)
 		    });
+	    }
+
+	    public Size BorderSize { get; } = new Size(16, 38);
+
+	    public Size Size {
+		    get { return _form.Size; }
+		    set {
+				_form.FormBorderStyle = FormBorderStyle.Sizable;
+				_form.WindowState = FormWindowState.Normal;
+				_form.Size = value + BorderSize;
+			}
 	    }
 
 	    protected virtual void MakeFullScreen() {
