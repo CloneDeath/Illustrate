@@ -7,8 +7,6 @@ namespace Illustrate.Vulkan.SpirV.Instructions.ModeSetting
 	/// </summary>
 	public class ExecutionMode : BaseInstruction
 	{
-		public ExecutionMode() : this(0, Native.ExecutionMode.Max) { }
-
 		public ExecutionMode(int entryPoint, Native.ExecutionMode mode, params int[] literals) {
 			EntryPoint = entryPoint;
 			Mode = mode;

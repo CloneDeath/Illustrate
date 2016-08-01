@@ -9,8 +9,8 @@ namespace Illustrate.Vulkan.SpirV.Instructions
 
 		public byte[] GetBytes() {
 			var bytes = new ByteArray();
-			bytes.PushUInt16((ushort)WordCount);
 			bytes.PushUInt16((ushort)OpCode);
+			bytes.PushUInt16((ushort)WordCount);
 
 			bytes.Push(GetParameterBytes());
 

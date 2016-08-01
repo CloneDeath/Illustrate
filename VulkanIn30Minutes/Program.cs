@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.IO;
+using System.Linq;
 using Illustrate.Vulkan;
 using Illustrate.Vulkan.SpirV;
 using Illustrate.Vulkan.SpirV.Instructions;
@@ -8,6 +9,7 @@ using Illustrate.Vulkan.SpirV.Instructions.ControlFlow;
 using Illustrate.Vulkan.SpirV.Instructions.Debug;
 using Illustrate.Vulkan.SpirV.Instructions.Extension;
 using Illustrate.Vulkan.SpirV.Instructions.Function;
+using Illustrate.Vulkan.SpirV.Instructions.Image;
 using Illustrate.Vulkan.SpirV.Instructions.Memory;
 using Illustrate.Vulkan.SpirV.Instructions.ModeSetting;
 using Illustrate.Vulkan.SpirV.Instructions.TypeDeclaration;
@@ -15,6 +17,7 @@ using Illustrate.Vulkan.SpirV.Native;
 using Illustrate.Windows;
 using VulkanSharp;
 using Capability = Illustrate.Vulkan.SpirV.Instructions.ModeSetting.Capability;
+using ExecutionMode = Illustrate.Vulkan.SpirV.Instructions.ModeSetting.ExecutionMode;
 using Extension = VulkanSharp.Extension;
 using MemoryModel = Illustrate.Vulkan.SpirV.Instructions.ModeSetting.MemoryModel;
 
@@ -150,66 +153,120 @@ namespace VulkanIn30Minutes
 				Bindings = new DescriptorSetLayoutBinding[0]
 			});
 
-			var module = device.CreateShaderModule(new SpirVModule {
+
+			var vertexModule = device.CreateShaderModule(new SpirVModule
+			{
 				Instructions = new ISpirVInstruction[] {
 					Capability.Shader,
 					new ExtInstImport(1, "GLSL.std.450"),
 					new MemoryModel(AddressingModel.Logical, Illustrate.Vulkan.SpirV.Native.MemoryModel.GLSL450),
 					new EntryPoint(ExecutionModel.Vertex, 4, "main", 9, 11, 16, 20),
 					new Source(SourceLanguage.GLSL, 400),
-					new SourceExtension("GL_ARB_separate_shader_object"), 
+					new SourceExtension("GL_ARB_separate_shader_objects"),
 					new SourceExtension("GL_ARB_shading_language_420pack"),
-					new Name(4, "main"), 
+					new Name(4, "main"),
 					new Name(9, "texcoord"),
-					new Name(11, "attr"), 
-					new Name(14, "gl_PerVertex"), 
-					new MemberName(14, 0, "gl_Position"), 
-					new Name(16, ""), 
-					new Name(20, "pos"), 
-					new Decorate(9, Decoration.Location, 0), 
-					new Decorate(11, Decoration.Location, 1), 
-					new MemberDecorate(14, 0, Decoration.BuiltIn, (int)BuiltIn.Position), 
+					new Name(11, "attr"),
+					new Name(14, "gl_PerVertex"),
+					new MemberName(14, 0, "gl_Position"),
+					new Name(16, ""),
+					new Name(20, "pos"),
+					new Decorate(9, Decoration.Location, 0),
+					new Decorate(11, Decoration.Location, 1),
+					new MemberDecorate(14, 0, Decoration.BuiltIn, (int)BuiltIn.Position),
 					new Decorate(14, Decoration.Block),
 					new Decorate(20, Decoration.Location, 0),
 					new TypeVoid(2),
 					new TypeFunction(3, 2),
 					new TypeFloat(6, 32),
-					new TypeVector(7, 6, 2), 
-					new TypePointer(8, StorageClass.Output, 7), 
-					new Variable(8, 9, StorageClass.Output), 
+					new TypeVector(7, 6, 2),
+					new TypePointer(8, StorageClass.Output, 7),
+					new Variable(8, 9, StorageClass.Output),
 					new TypePointer(10, StorageClass.Input, 7),
-					new Variable(10, 11, StorageClass.Input), 
+					new Variable(10, 11, StorageClass.Input),
 					new TypeVector(13, 6, 4),
-					new TypeStruct(14, 13),  
+					new TypeStruct(14, 13),
 					new TypePointer(15, StorageClass.Output, 14),
 					new Variable(15, 16, StorageClass.Output),
-					new TypeInt(17, 32, true), 
-					new Constant(17, 18, 0), 
-					new TypePointer(19, StorageClass.Input, 13), 
-					new Variable(19, 20, StorageClass.Input), 
-					new TypePointer(22, StorageClass.Output, 13), 
-					new Function(2, 1, FunctionControl.None, 3), 
+					new TypeInt(17, 32, true),
+					new Constant(17, 18, 0),
+					new TypePointer(19, StorageClass.Input, 13),
+					new Variable(19, 20, StorageClass.Input),
+					new TypePointer(22, StorageClass.Output, 13),
+					new Function(2, 4, FunctionControl.None, 3),
 					new Label(5),
-					new Load(7, 12, 11), 
-					new Store(9, 12), 
-					new Load(13, 21, 20), 
+					new Load(7, 12, 11),
+					new Store(9, 12),
+					new Load(13, 21, 20),
 					new AccessChain(22, 23, 16, 18),
-					new Store(23, 21), 
+					new Store(23, 21),
 					new Return(),
 					new FunctionEnd()
 				}
 			}.Compile(24));
 
+			var fragmentModule = device.CreateShaderModule(new SpirVModule {
+				Instructions = new ISpirVInstruction[] {
+					Capability.Shader,
+					new ExtInstImport(1, "GLSL.std.450"),
+					new MemoryModel(AddressingModel.Logical, Illustrate.Vulkan.SpirV.Native.MemoryModel.GLSL450),
+					new EntryPoint(ExecutionModel.Fragment, 4, "main", 9, 17),
+					new ExecutionMode(4, Illustrate.Vulkan.SpirV.Native.ExecutionMode.OriginUpperLeft), 
+					new Source(SourceLanguage.GLSL, 400), 
+					new SourceExtension("GL_ARB_separate_shader_objects"),
+					new SourceExtension("GL_ARB_shading_language_420pack"), 
+					new Name(4, "main"),
+					new Name(9, "uFragColor"),
+					new Name(13, "tex"),  
+					new Name(17, "texcoord"),
+					new Decorate(9, Decoration.Location, 0), 
+					new Decorate(13, Decoration.DescriptorSet, 0), 
+					new Decorate(13, Decoration.Binding, 0), 
+					new Decorate(17, Decoration.Location, 0),
+					new TypeVoid(2),
+					new TypeFunction(3, 2),   
+					new TypeFloat(6, 32), 
+					new TypeVector(7, 6, 4), 
+					new TypePointer(8, StorageClass.Output, 7), 
+					new Variable(8, 9, StorageClass.Output), 
+					new TypeImage(10, 6, Dim.Dim2D, ImageDepth.Missing, false, Samples.Single, SamplerPresence.Always, ImageFormat.Unknown), 
+					new TypeSampledImage(11, 10), 
+					new TypePointer(12, StorageClass.UniformConstant, 11), 
+					new Variable(12, 13, StorageClass.UniformConstant), 
+					new TypeVector(15, 6, 2), 
+					new TypePointer(16, StorageClass.Input, 15), 
+					new Variable(16, 17, StorageClass.Input), 
+					new Function(2, 4, FunctionControl.None, 3), 
+					new Label(5), 
+					new Load(11, 14, 13), 
+					new Load(15, 18, 17), 
+					new ImageSampleImplicitLod(7, 19, 14, 18),
+					new Store(9, 19), 
+					new Return(), 
+					new FunctionEnd(), 
+				}
+			}.Compile(20));
+
 			var pipeline = device.CreateGraphicsPipelines(new PipelineCache(), 1, new GraphicsPipelineCreateInfo {
 				Stages = new[] {
 					new PipelineShaderStageCreateInfo {
-						Module = module,
-						
+						Module = vertexModule,
+						Stage = ShaderStageFlags.Vertex,
+						Name = "vertex"
+					}, 
+					new PipelineShaderStageCreateInfo {
+						Module = fragmentModule,
+						Stage = ShaderStageFlags.Fragment,
+						Name = "fragment"
 					}, 
 				},
 				ColorBlendState = new PipelineColorBlendStateCreateInfo(),
 				DepthStencilState = new PipelineDepthStencilStateCreateInfo(),
-				DynamicState = new PipelineDynamicStateCreateInfo(),
+				DynamicState = new PipelineDynamicStateCreateInfo {
+					DynamicStates = new DynamicState[] {
+						DynamicState.Viewport, 
+					}
+				},
 				InputAssemblyState = new PipelineInputAssemblyStateCreateInfo(),
 				MultisampleState = new PipelineMultisampleStateCreateInfo(),
 				RasterizationState = new PipelineRasterizationStateCreateInfo(),

@@ -10,7 +10,7 @@ namespace Illustrate.Vulkan.SpirV.Native
 		GLSL = 2,
 		OpenCL_C = 3,
 		OpenCL_CPP = 4,
-		Max = 0x7fffffff,
+		Max = 0x7fffffff
 	}
 
 	public enum ExecutionModel {
@@ -21,56 +21,248 @@ namespace Illustrate.Vulkan.SpirV.Native
 		Fragment = 4,
 		GLCompute = 5,
 		Kernel = 6,
-		Max = 0x7fffffff,
+		Max = 0x7fffffff
 	}
 
 	public enum AddressingModel {
 		Logical = 0,
 		Physical32 = 1,
 		Physical64 = 2,
-		Max = 0x7fffffff,
+		Max = 0x7fffffff
 	}
 
 	public enum MemoryModel {
 		Simple = 0,
 		GLSL450 = 1,
 		OpenCL = 2,
-		Max = 0x7fffffff,
+		Max = 0x7fffffff
 	}
 
 	public enum ExecutionMode {
+		/// <summary>
+		/// Number of times to invoke the geometry stage for each input primitive received. 
+		/// The default is to run once for each input primitive. 
+		/// If greater than the target-dependent maximum, it will fail to compile. 
+		/// Only valid with the Geometry Execution Model.
+		/// 
+		/// Extra Operands: [Literal Number] Number of Invocations
+		/// </summary>
 		Invocations = 0,
+
+		/// <summary>
+		/// Requests the tessellation primitive generator to divide edges into a collection of equal-sized segments. 
+		/// Only valid with one of the tessellation Execution Models.
+		/// </summary>
 		SpacingEqual = 1,
+
+		/// <summary>
+		/// Requests the tessellation primitive generator to divide edges into an even number of
+		/// equal-length segments plus two additional shorter fractional segments. 
+		/// Only valid with one of the tessellation Execution Models.
+		/// </summary>
 		SpacingFractionalEven = 2,
+
+		/// <summary>
+		/// Requests the tessellation primitive generator to divide edges into an odd number of 
+		/// equal-length segments plus two additional shorter fractional segments. 
+		/// Only valid with one of the tessellation Execution Models.
+		/// </summary>
 		SpacingFractionalOdd = 3,
+
+		/// <summary>
+		/// Requests the tessellation primitive generator to generate triangles in clockwise order.
+		/// Only valid with one of the tessellation Execution Models.
+		/// </summary>
 		VertexOrderCw = 4,
+
+		/// <summary>
+		/// Requests the tessellation primitive generator to generate triangles in counter-clockwise order. 
+		/// Only valid with one of the tessellation Execution Models.
+		/// </summary>
 		VertexOrderCcw = 5,
+
+		/// <summary>
+		/// Pixels appear centered on whole-number pixel offsets. 
+		/// E.g., the coordinate (0.5, 0.5) appears to move to (0.0, 0.0). 
+		/// Only valid with the Fragment Execution Model. 
+		/// If a Fragment entry point does not have this set, pixels appear centered at 
+		/// offsets of (0.5, 0.5) from whole numbers
+		/// </summary>
 		PixelCenterInteger = 6,
+
+		/// <summary>
+		/// Pixel coordinates appear to originate in the upper left, and increase toward the right and downward. 
+		/// Only valid with the Fragment Execution Model.
+		/// </summary>
 		OriginUpperLeft = 7,
+
+		/// <summary>
+		/// Pixel coordinates appear to originate in the lower left, and increase toward the right and upward. 
+		/// Only valid with the Fragment Execution Model.
+		/// </summary>
 		OriginLowerLeft = 8,
+
+		/// <summary>
+		/// Fragment tests are to be performed before fragment shader execution. 
+		/// Only valid with the Fragment Execution Model.
+		/// </summary>
 		EarlyFragmentTests = 9,
+
+		/// <summary>
+		/// Requests the tessellation primitive generator to generate a point for each distinct vertex
+		/// in the subdivided primitive, rather than to generate lines or triangles. 
+		/// Only valid with one of the tessellation Execution Models.
+		/// </summary>
 		PointMode = 10,
+
+		/// <summary>
+		/// This stage will run in transform feedback-capturing mode and this module is responsible 
+		/// for describing the transform-feedback setup. 
+		/// See the XfbBuffer, Offset, and XfbStride Decorations.
+		/// </summary>
 		Xfb = 11,
+
+		/// <summary>
+		/// This mode must be declared if this module potentially changes the fragment’s depth.
+		/// Only valid with the Fragment Execution Model.
+		/// </summary>
 		DepthReplacing = 12,
+
+		/// <summary>
+		/// External optimizations may assume depth modifications will leave the fragment’s
+		/// depth as greater than or equal to the fragment’s interpolated depth value (given
+		/// by the z component of the FragCoord BuiltIn decorated variable). 
+		/// Only valid with the Fragment Execution Model.
+		/// </summary>
 		DepthGreater = 14,
+
+		/// <summary>
+		/// External optimizations may assume depth modifications leave the fragment’s depth
+		/// less than the fragment’s interpolated depth value, (given by the z component of the
+		/// FragCoord BuiltIn decorated variable).
+		/// Only valid with the Fragment Execution Model.
+		/// </summary>
 		DepthLess = 15,
+
+		/// <summary>
+		/// External optimizations may assume this stage did not modify the fragment’s depth.
+		/// However, DepthReplacing mode must accurately represent depth modification.
+		/// Only valid with the Fragment Execution Model.
+		/// </summary>
 		DepthUnchanged = 16,
+
+		/// <summary>
+		/// Indicates the work-group size in the x, y, and z dimensions. 
+		/// Only valid with the GLCompute or Kernel Execution Models.
+		/// 
+		/// Extra Operands: [Literal Number] x size, [Literal Number] y size, [Literal Number] z size
+		/// </summary>
 		LocalSize = 17,
+
+		/// <summary>
+		/// A hint to the compiler, which indicates the most likely to be used work-group 
+		/// size in the x, y, and z dimensions. 
+		/// Only valid with the Kernel Execution Model.
+		/// 
+		/// Extra Operands: [Literal Number] x size, [Literal Number] y size, [Literal Number] z size
+		/// </summary>
 		LocalSizeHint = 18,
+
+		/// <summary>
+		/// Stage input primitive is points. 
+		/// Only valid with the Geometry Execution Model.
+		/// </summary>
 		InputPoints = 19,
+
+		/// <summary>
+		/// Stage input primitive is lines. 
+		/// Only valid with the Geometry Execution Model.
+		/// </summary>
 		InputLines = 20,
+
+		/// <summary>
+		/// Stage input primitive is lines adjacency.
+		/// Only valid with the Geometry Execution Model.
+		/// </summary>
 		InputLinesAdjacency = 21,
+
+		/// <summary>
+		/// For a geometry stage, input primitive is triangles. 
+		/// For a tessellation stage, requests the tessellation primitive generator to generate triangles. 
+		/// Only valid with the Geometry or one of the tessellation Execution Models.
+		/// </summary>
 		Triangles = 22,
+
+		/// <summary>
+		/// Geometry stage input primitive is triangles adjacency. 
+		/// Only valid with the Geometry Execution Model.
+		/// </summary>
 		InputTrianglesAdjacency = 23,
+
+		/// <summary>
+		/// Requests the tessellation primitive generator to generate quads. 
+		/// Only valid with one of the tessellation Execution Models.
+		/// </summary>
 		Quads = 24,
+
+		/// <summary>
+		/// Requests the tessellation primitive generator to generate isolines. 
+		/// Only valid with one of the tessellation Execution Models.
+		/// </summary>
 		Isolines = 25,
+
+		/// <summary>
+		/// For a geometry stage, the maximum number of vertices the shader will ever emit in a single invocation. 
+		/// For a tessellation-control stage, the number of vertices in the output patch produced by the tessellation 
+		/// control shader, which also specifies the number of times the tessellation control shader is invoked. 
+		/// Only valid with the Geometry or one of the tessellation Execution Models.
+		/// 
+		/// Extra Operands: [Literal Number] Vertex count
+		/// </summary>
 		OutputVertices = 26,
+
+		/// <summary>
+		/// Stage output primitive is points. 
+		/// Only valid with the Geometry Execution Model.
+		/// </summary>
 		OutputPoints = 27,
+
+		/// <summary>
+		/// Stage output primitive is line strip. 
+		/// Only valid with the Geometry Execution Model.
+		/// </summary>
 		OutputLineStrip = 28,
+
+		/// <summary>
+		/// Stage output primitive is triangle strip.
+		/// Only valid with the Geometry Execution Model.
+		/// </summary>
 		OutputTriangleStrip = 29,
+
+		/// <summary>
+		/// A hint to the compiler, which indicates that most operations used in the entry point are
+		/// explicitly vectorized using a particular vector type.
+		/// The 16 high-order bits of Vector Type operand specify the number of components of the vector.
+		/// The 16 low-order bits of Vector Type operand specify the data type of the vector.
+		/// These are the legal data type values:
+		/// 0 represents an 8-bit integer value.
+		/// 1 represents a 16-bit integer value.
+		/// 2 represents a 32-bit integer value.
+		/// 3 represents a 64-bit integer value.
+		/// 4 represents a 16-bit float value.
+		/// 5 represents a 32-bit float value.
+		/// 6 represents a 64-bit float value.
+		/// Only valid with the Kernel Execution Model.
+		/// 
+		/// Extra Operands: [Literal Number] Vector type
+		/// </summary>
 		VecTypeHint = 30,
-		ContractionOff = 31,
-		Max = 0x7fffffff,
+
+		/// <summary>
+		/// Indicates that floating-point-expressions contraction is disallowed.
+		/// Only valid with the Kernel Execution Model.
+		/// </summary>
+		ContractionOff = 31
 	}
 
 	public enum StorageClass
@@ -146,7 +338,7 @@ namespace Illustrate.Vulkan.SpirV.Native
 		/// <summary>
 		/// For holding image memory.
 		/// </summary>
-		Image = 11,
+		Image = 11
 	}
 
 	public enum Dim {
@@ -156,8 +348,7 @@ namespace Illustrate.Vulkan.SpirV.Native
 		Cube = 3,
 		Rect = 4,
 		Buffer = 5,
-		SubpassData = 6,
-		Max = 0x7fffffff,
+		SubpassData = 6
 	}
 
 	public enum SamplerAddressingMode {
@@ -166,13 +357,13 @@ namespace Illustrate.Vulkan.SpirV.Native
 		Clamp = 2,
 		Repeat = 3,
 		RepeatMirrored = 4,
-		Max = 0x7fffffff,
+		Max = 0x7fffffff
 	}
 
 	public enum SamplerFilterMode {
 		Nearest = 0,
 		Linear = 1,
-		Max = 0x7fffffff,
+		Max = 0x7fffffff
 	}
 
 	public enum ImageFormat {
@@ -215,8 +406,7 @@ namespace Illustrate.Vulkan.SpirV.Native
 		Rg16ui = 36,
 		Rg8ui = 37,
 		R16ui = 38,
-		R8ui = 39,
-		Max = 0x7fffffff,
+		R8ui = 39
 	}
 
 	public enum ImageChannelOrder {
@@ -240,7 +430,7 @@ namespace Illustrate.Vulkan.SpirV.Native
 		sRGBA = 17,
 		sBGRA = 18,
 		ABGR = 19,
-		Max = 0x7fffffff,
+		Max = 0x7fffffff
 	}
 
 	public enum ImageChannelDataType {
@@ -261,7 +451,7 @@ namespace Illustrate.Vulkan.SpirV.Native
 		Float = 14,
 		UnormInt24 = 15,
 		UnormInt101010_2 = 16,
-		Max = 0x7fffffff,
+		Max = 0x7fffffff
 	}
 
 	public enum ImageOperandsShift {
@@ -273,19 +463,86 @@ namespace Illustrate.Vulkan.SpirV.Native
 		ConstOffsetsShift = 5,
 		SampleShift = 6,
 		MinLodShift = 7,
-		Max = 0x7fffffff,
+		Max = 0x7fffffff
 	}
 
-	public enum ImageOperandsMask {
-		MaskNone = 0,
-		BiasMask = 0x00000001,
-		LodMask = 0x00000002,
-		GradMask = 0x00000004,
-		ConstOffsetMask = 0x00000008,
-		OffsetMask = 0x00000010,
-		ConstOffsetsMask = 0x00000020,
-		SampleMask = 0x00000040,
-		MinLodMask = 0x00000080,
+	[Flags]
+	public enum ImageOperands {
+		None = 0,
+
+		/// <summary>
+		/// A following operand is the bias added to the implicit level of detail. 
+		/// Only valid with implicit-lod instructions. 
+		/// It must be a floating-point type scalar. 
+		/// This can only be used with an OpTypeImage that has a Dim operand of 1D, 2D, 3D, or Cube, and the MS operand must be 0 (Samples.Single).
+		/// </summary>
+		Bias = 1 << 0,
+
+		/// <summary>
+		/// A following operand is the explicit level-of-detail to use. 
+		/// Only valid with explicit-lod instructions. 
+		/// For sampling operations, it must be a floating-point type scalar. 
+		/// For queries and fetch operations, it must be an integer type scalar. 
+		/// This can only be used with an OpTypeImage that has a Dim operand of 1D, 2D, 3D, or Cube, and the MS operand must be 0 (Samples.Single).
+		/// </summary>
+		Lod = 1 << 1,
+
+		/// <summary>
+		/// Two following operands are dx followed by dy. 
+		/// These are explicit derivatives in the x and y direction to use in computing level of detail. 
+		/// Each is a scalar or vector containing (du/dx [,dv/dx] [,dw/dx]) and (du/dy [,dv/dy] [,dw/dy]). 
+		/// The number of components of each must equal the number of components in Coordinate, 
+		/// minus the array layer component, if present. 
+		/// Only valid with explicit-lod instructions. 
+		/// They must be a scalar or vector of floating-point type. 
+		/// This can only be used with an OpTypeImage that has an MS operand of 0 (Samples.Single). 
+		/// It is invalid to set both the Lod and Gradbits.
+		/// </summary>
+		Grad = 1 << 2,
+
+		/// <summary>
+		/// A following operand is added to (u, v, w) before texel lookup. 
+		/// It must be an id of an integer-based constant instruction of scalar or vector type. 
+		/// It is a compile-time error if these fall outside a target-dependent allowed range. 
+		/// The number of components must equal the number of components in Coordinate,
+		/// minus the array layer component, if present.
+		/// </summary>
+		ConstOffset = 1 << 3,
+
+		/// <summary>
+		/// A following operand is added to (u, v, w) before texel lookup. 
+		/// It must be a scalar or vector of integer type. 
+		/// It is a compile-time error if these fall outside a target-dependent allowed range. 
+		/// The number of components must equal the number of components in Coordinate, 
+		/// minus the array layer component, if present.
+		/// </summary>
+		Offset = 1 << 4,
+
+		/// <summary>
+		/// A following operand is Offsets.
+		/// Offsets must be an id of a constant instruction making an array of size four of vectors of two integer components. 
+		/// Each gathered texel is identified by adding one of these array elements to the (u, v) sampled location. 
+		/// It is a compile-time error if this falls outside a target-dependent allowed range. 
+		/// Only valid with OpImageGather or OpImageDrefGather.
+		/// </summary>
+		ConstOffsets = 1 << 5,
+
+		/// <summary>
+		/// A following operand is the sample number of the sample to use. 
+		/// Only valid with OpImageFetch, OpImageRead, and OpImageWrite. 
+		/// It is invalid to have a Sample operand if the underlying OpTypeImage has MS of 0 (Samples.Single). 
+		/// It must be an integer type scalar.
+		/// </summary>
+		Sample = 1 << 6,
+
+		/// <summary>
+		/// A following operand is the minimum level-of-detail to use when accessing the image. 
+		/// Only valid with Implicit instructions and Grad instructions. 
+		/// It must be a floating-point type scalar. 
+		/// This can only be used with an OpTypeImage that has a Dim operand of 1D, 2D, 3D, or Cube, 
+		/// and the MS operand must be 0 (Samples.Single).
+		/// </summary>
+		MinLod = 1 << 7
 	}
 
 	public enum FPFastMathModeShift {
@@ -294,7 +551,7 @@ namespace Illustrate.Vulkan.SpirV.Native
 		NSZShift = 2,
 		AllowRecipShift = 3,
 		FastShift = 4,
-		Max = 0x7fffffff,
+		Max = 0x7fffffff
 	}
 
 	public enum FPFastMathModeMask {
@@ -303,7 +560,7 @@ namespace Illustrate.Vulkan.SpirV.Native
 		NotInfMask = 0x00000002,
 		NSZMask = 0x00000004,
 		AllowRecipMask = 0x00000008,
-		FastMask = 0x00000010,
+		FastMask = 0x00000010
 	}
 
 	public enum FPRoundingMode {
@@ -311,20 +568,30 @@ namespace Illustrate.Vulkan.SpirV.Native
 		RTZ = 1,
 		RTP = 2,
 		RTN = 3,
-		Max = 0x7fffffff,
+		Max = 0x7fffffff
 	}
 
 	public enum LinkageType {
 		Export = 0,
 		Import = 1,
-		Max = 0x7fffffff,
+		Max = 0x7fffffff
 	}
 
 	public enum AccessQualifier {
+		/// <summary>
+		/// A read-only object.
+		/// </summary>
 		ReadOnly = 0,
+
+		/// <summary>
+		/// A write-only object.
+		/// </summary>
 		WriteOnly = 1,
-		ReadWrite = 2,
-		Max = 0x7fffffff,
+
+		/// <summary>
+		/// A readable and writable object.
+		/// </summary>
+		ReadWrite = 2
 	}
 
 	public enum FunctionParameterAttribute {
@@ -336,7 +603,7 @@ namespace Illustrate.Vulkan.SpirV.Native
 		NoCapture = 5,
 		NoWrite = 6,
 		NoReadWrite = 7,
-		Max = 0x7fffffff,
+		Max = 0x7fffffff
 	}
 
 	public enum Decoration
@@ -681,7 +948,7 @@ namespace Illustrate.Vulkan.SpirV.Native
 		/// </summary>
 		Alignment = 44,
 		
-		Max = 0x7fffffff,
+		Max = 0x7fffffff
 	}
 
 	public enum BuiltIn {
@@ -935,38 +1202,38 @@ namespace Illustrate.Vulkan.SpirV.Native
 		InstanceIndex = 43,
 
 
-		Max = 0x7fffffff,
+		Max = 0x7fffffff
 	}
 
 	public enum SelectionControlShift {
 		FlattenShift = 0,
 		DontFlattenShift = 1,
-		Max = 0x7fffffff,
+		Max = 0x7fffffff
 	}
 
 	public enum SelectionControlMask {
 		MaskNone = 0,
 		FlattenMask = 0x00000001,
-		DontFlattenMask = 0x00000002,
+		DontFlattenMask = 0x00000002
 	}
 
 	public enum LoopControlShift {
 		UnrollShift = 0,
 		DontUnrollShift = 1,
-		Max = 0x7fffffff,
+		Max = 0x7fffffff
 	}
 
 	public enum LoopControlMask {
 		MaskNone = 0,
 		UnrollMask = 0x00000001,
-		DontUnrollMask = 0x00000002,
+		DontUnrollMask = 0x00000002
 	}
 
 	public enum FunctionControlShift {
 		InlineShift = 0,
 		DontInlineShift = 1,
 		PureShift = 2,
-		ConstShift = 3,
+		ConstShift = 3
 	}
 
 	[Flags]
@@ -995,7 +1262,7 @@ namespace Illustrate.Vulkan.SpirV.Native
 		/// memory or dereference function parameters. Always computes the same result for 
 		/// the same argument values.
 		/// </summary>
-		Const = 1 << 3,
+		Const = 1 << 3
 	}
 
 	public enum MemorySemanticsShift {
@@ -1009,7 +1276,7 @@ namespace Illustrate.Vulkan.SpirV.Native
 		CrossWorkgroupMemoryShift = 9,
 		AtomicCounterMemoryShift = 10,
 		ImageMemoryShift = 11,
-		Max = 0x7fffffff,
+		Max = 0x7fffffff
 	}
 
 	public enum MemorySemanticsMask {
@@ -1023,7 +1290,7 @@ namespace Illustrate.Vulkan.SpirV.Native
 		WorkgroupMemoryMask = 0x00000100,
 		CrossWorkgroupMemoryMask = 0x00000200,
 		AtomicCounterMemoryMask = 0x00000400,
-		ImageMemoryMask = 0x00000800,
+		ImageMemoryMask = 0x00000800
 	}
 
 	public enum MemoryAccessShift {
@@ -1049,7 +1316,7 @@ namespace Illustrate.Vulkan.SpirV.Native
 		/// <summary>
 		/// Hints that the accessed address is not likely to be accessed again in the near future.
 		/// </summary>
-		Nontemporal = 1 << 2,
+		Nontemporal = 1 << 2
 	}
 
 	public enum Scope {
@@ -1058,31 +1325,31 @@ namespace Illustrate.Vulkan.SpirV.Native
 		Workgroup = 2,
 		Subgroup = 3,
 		Invocation = 4,
-		Max = 0x7fffffff,
+		Max = 0x7fffffff
 	}
 
 	public enum GroupOperation {
 		Reduce = 0,
 		InclusiveScan = 1,
 		ExclusiveScan = 2,
-		Max = 0x7fffffff,
+		Max = 0x7fffffff
 	}
 
 	public enum KernelEnqueueFlags {
 		NoWait = 0,
 		WaitKernel = 1,
 		WaitWorkGroup = 2,
-		Max = 0x7fffffff,
+		Max = 0x7fffffff
 	}
 
 	public enum KernelProfilingInfoShift {
 		CmdExecTimeShift = 0,
-		Max = 0x7fffffff,
+		Max = 0x7fffffff
 	}
 
 	public enum KernelProfilingInfoMask {
 		MaskNone = 0,
-		CmdExecTimeMask = 0x00000001,
+		CmdExecTimeMask = 0x00000001
 	}
 
 	public enum Capability {
@@ -1142,7 +1409,7 @@ namespace Illustrate.Vulkan.SpirV.Native
 		StorageImageReadWithoutFormat = 55,
 		StorageImageWriteWithoutFormat = 56,
 		MultiViewport = 57,
-		Max = 0x7fffffff,
+		Max = 0x7fffffff
 	}
 
 	public enum Operation {
@@ -1440,6 +1707,6 @@ namespace Illustrate.Vulkan.SpirV.Native
 		AtomicFlagTestAndSet = 318,
 		AtomicFlagClear = 319,
 		ImageSparseRead = 320,
-		Max = 0x7fffffff,
+		Max = 0x7fffffff
 	}
 }
