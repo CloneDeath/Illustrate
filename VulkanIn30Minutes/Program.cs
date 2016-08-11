@@ -1,8 +1,6 @@
-﻿using System.IO;
-using System.Linq;
+﻿using System.Linq;
 using Illustrate.Vulkan;
 using Illustrate.Vulkan.SpirV;
-using Illustrate.Vulkan.SpirV.Instructions;
 using Illustrate.Vulkan.SpirV.Instructions.Annotation;
 using Illustrate.Vulkan.SpirV.Instructions.ConstantCreation;
 using Illustrate.Vulkan.SpirV.Instructions.ControlFlow;
@@ -58,7 +56,6 @@ namespace VulkanIn30Minutes
 			var device = physicalDevice.CreateDevice(new DeviceCreateInfo {
 				QueueCreateInfos = new[] {
 					new DeviceQueueCreateInfo {
-						QueueCount = 1,
 						QueueFamilyIndex = selectedFamily.QueueIndex,
 						QueuePriorities = new []{1f}
 					}, 
@@ -73,25 +70,22 @@ namespace VulkanIn30Minutes
 			var swapchain = device.CreateSwapchainKHR(new SwapchainCreateInfoKhr {
 				Surface = surface,
 				MinImageCount = 2,
-				ImageExtent = surfaceInfo.CurrentExtent,
-				PreTransform = surfaceInfo.CurrentTransform,
-				ImageColorSpace = format.ColorSpace,
 				ImageFormat = format.Format,
-				PresentMode = PresentModeKhr.Fifo,
+				ImageColorSpace = format.ColorSpace,
+				ImageExtent = surfaceInfo.CurrentExtent,
 				ImageArrayLayers = 1,
 				ImageUsage = ImageUsageFlags.ColorAttachment,
-				QueueFamilyIndices = new[] {
-					selectedFamily.QueueIndex
-				},
 				ImageSharingMode = SharingMode.Exclusive,
+				PreTransform = surfaceInfo.CurrentTransform,
 				CompositeAlpha = CompositeAlphaFlagsKhr.Opaque,
+				PresentMode = PresentModeKhr.Fifo,
 				Clipped = true
 			});
 
 			var images = device.GetSwapchainImagesKHR(swapchain);
 
 			var semaphorePresentComplete = device.CreateSemaphore(new SemaphoreCreateInfo());
-			var currentSwapImage = device.AcquireNextImageKHR(swapchain, long.MaxValue, semaphorePresentComplete, new Fence());
+			var currentSwapImage = device.AcquireNextImageKHR(swapchain, long.MaxValue, semaphorePresentComplete, new Fence() {_handle = 0});
 
 			var imageView = device.CreateImageView(new ImageViewCreateInfo {
 				Image = images[currentSwapImage],
@@ -148,11 +142,6 @@ namespace VulkanIn30Minutes
 				RenderPass = renderpass,
 				Layers = 1
 			});
-
-			var descSetLayout = device.CreateDescriptorSetLayout(new DescriptorSetLayoutCreateInfo {
-				Bindings = new DescriptorSetLayoutBinding[0]
-			});
-
 
 			var vertexModule = device.CreateShaderModule(new SpirVModule
 			{
@@ -246,8 +235,24 @@ namespace VulkanIn30Minutes
 					new FunctionEnd(), 
 				}
 			}.Compile(20));
-
-			var pipeline = device.CreateGraphicsPipelines(new PipelineCache(), 1, new GraphicsPipelineCreateInfo {
+			
+			var descSetLayout = device.CreateDescriptorSetLayout(new DescriptorSetLayoutCreateInfo
+			{
+				Bindings = new[] {
+					new DescriptorSetLayoutBinding {
+						
+					}, 
+				}
+			});
+			
+			var pipelineLayout = device.CreatePipelineLayout(new PipelineLayoutCreateInfo {
+				PushConstantRanges = new PushConstantRange[] {
+					new PushConstantRange {
+						StageFlags = ShaderStageFlags.AllGraphics
+					}
+				}
+			});
+			var pipeline = device.CreateGraphicsPipelines(new PipelineCache { _handle = 0 }, 1, new GraphicsPipelineCreateInfo {
 				Stages = new[] {
 					new PipelineShaderStageCreateInfo {
 						Module = vertexModule,
@@ -260,50 +265,120 @@ namespace VulkanIn30Minutes
 						Name = "fragment"
 					}, 
 				},
-				ColorBlendState = new PipelineColorBlendStateCreateInfo(),
-				DepthStencilState = new PipelineDepthStencilStateCreateInfo(),
+				VertexInputState = new PipelineVertexInputStateCreateInfo
+				{
+
+				},
+				InputAssemblyState = new PipelineInputAssemblyStateCreateInfo
+				{
+
+				},
+				TessellationState = new PipelineTessellationStateCreateInfo
+				{
+
+				},
+				ViewportState = new PipelineViewportStateCreateInfo
+				{
+
+				},
+				RasterizationState = new PipelineRasterizationStateCreateInfo
+				{
+
+				},
+				MultisampleState = new PipelineMultisampleStateCreateInfo
+				{
+
+				},
+				DepthStencilState = new PipelineDepthStencilStateCreateInfo
+				{
+
+				},
+				ColorBlendState = new PipelineColorBlendStateCreateInfo {
+					Attachments = new[] {
+						new PipelineColorBlendAttachmentState {
+							AlphaBlendOp = BlendOp.Max,
+							BlendEnable = true,
+							SrcAlphaBlendFactor = BlendFactor.One,
+							DstAlphaBlendFactor = BlendFactor.One,
+
+							ColorBlendOp = BlendOp.Add,
+							SrcColorBlendFactor = BlendFactor.SrcAlpha,
+							DstColorBlendFactor = BlendFactor.OneMinusSrcAlpha,
+							ColorWriteMask = ColorComponentFlags.A | ColorComponentFlags.B | ColorComponentFlags.G | ColorComponentFlags.R
+						} 
+					}
+				},
 				DynamicState = new PipelineDynamicStateCreateInfo {
-					DynamicStates = new DynamicState[] {
+					DynamicStates = new[] {
 						DynamicState.Viewport, 
 					}
 				},
-				InputAssemblyState = new PipelineInputAssemblyStateCreateInfo(),
-				MultisampleState = new PipelineMultisampleStateCreateInfo(),
-				RasterizationState = new PipelineRasterizationStateCreateInfo(),
-				RenderPass = renderpass,
-				TessellationState = new PipelineTessellationStateCreateInfo(),
-				VertexInputState = new PipelineVertexInputStateCreateInfo(),
-				ViewportState = new PipelineViewportStateCreateInfo(),
+				Layout = 
+				RenderPass = renderpass
 			}).First();
 
 			var descPool = device.CreateDescriptorPool(new DescriptorPoolCreateInfo {});
 
 			var descSet = device.AllocateDescriptorSets(new DescriptorSetAllocateInfo {}).First();
 
-			var buffer = device.CreateBuffer(new BufferCreateInfo {});
-			var memory = device.AllocateMemory(new MemoryAllocateInfo());
-			device.BindBufferMemory(buffer, memory, new DeviceSize());
+			var buffer = device.CreateBuffer(new BufferCreateInfo {
+				Size = 4 * 3 * 3,
+				Usage = BufferUsageFlags.VertexBuffer,
+				SharingMode = SharingMode.Exclusive
+			});
+			var memory = device.AllocateMemory(new MemoryAllocateInfo {
+				AllocationSize = 4*3*3
+			});
+			device.BindBufferMemory(buffer, memory, 0);
 
-			var data = device.MapMemory(memory, new DeviceSize(), new DeviceSize(), 0);
+			var data = device.MapMemory(memory, 0, 4*3*3, 0);
+			
 			device.UnmapMemory(memory);
 
 			device.UpdateDescriptorSets(1, new WriteDescriptorSet(), 0, null);
 
-			var commandPool = device.CreateCommandPool(new CommandPoolCreateInfo());
+			var commandPool = device.CreateCommandPool(new CommandPoolCreateInfo {
+				QueueFamilyIndex = selectedFamily.QueueIndex
+			});
 
-			var commandBuffer = device.AllocateCommandBuffers(new CommandBufferAllocateInfo()).First();
+			var commandBuffer = device.AllocateCommandBuffers(new CommandBufferAllocateInfo {
+				CommandPool = commandPool,
+				CommandBufferCount = 1,
+				Level = CommandBufferLevel.Primary
+			}).First();
 
 			commandBuffer.Begin(new CommandBufferBeginInfo());
-			commandBuffer.CmdBeginRenderPass(new RenderPassBeginInfo(), SubpassContents.Inline );
+			commandBuffer.CmdBeginRenderPass(new RenderPassBeginInfo {
+				Framebuffer = framebuffer,
+				RenderPass = renderpass,
+				RenderArea = new Rect2D() {
+					Offset = new Offset2D() { X = 0, Y = 0},
+					Extent = surfaceInfo.CurrentExtent
+				}
+			}, SubpassContents.Inline );
 			commandBuffer.CmdBindPipeline(PipelineBindPoint.Graphics, pipeline);
-			commandBuffer.CmdBindDescriptorSets(PipelineBindPoint.Graphics, new PipelineLayout(), 0, 1, descSet, 0, 0);
-			commandBuffer.CmdSetViewport(0, 1, new Viewport());
+			commandBuffer.CmdBindDescriptorSets(PipelineBindPoint.Graphics, new PipelineLayout {}, 0, 1, descSet, 0, 0);
+			commandBuffer.CmdSetViewport(0, 1, new Viewport {
+				X = 0,
+				Y = 0,
+				Width = surfaceInfo.CurrentExtent.Width,
+				Height = surfaceInfo.CurrentExtent.Height,
+				MinDepth = 0,
+				MaxDepth = 1
+			});
 			commandBuffer.CmdDraw(3, 1, 0, 0);
 			commandBuffer.CmdEndRenderPass();
 			commandBuffer.End();
 
-			queue.Submit(1, new SubmitInfo {CommandBuffers = new []{commandBuffer}}, new Fence());
-			queue.PresentKHR(new PresentInfoKhr());
+			queue.Submit(1, new SubmitInfo {CommandBuffers = new []{commandBuffer}}, new Fence() {_handle = 0});
+			queue.PresentKHR(new PresentInfoKhr {
+				Swapchains = new[] {
+					swapchain
+				},
+				ImageIndices = new [] {
+					currentSwapImage
+				}
+			});
 		}
 	}
 }
