@@ -40,12 +40,12 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
-    <Reference Include="VulkanSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\VulkanSharp.Windows.1.0.0.1\lib\net45\VulkanSharp.dll</HintPath>
+    <Reference Include="VulkanSharp, Version=1.0.0.2, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\VulkanSharp.Windows.1.0.0.2\lib\net45\VulkanSharp.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="VulkanSharp.Windows, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\VulkanSharp.Windows.1.0.0.1\lib\net45\VulkanSharp.Windows.dll</HintPath>
+    <Reference Include="VulkanSharp.Windows, Version=1.0.0.2, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\VulkanSharp.Windows.1.0.0.2\lib\net45\VulkanSharp.Windows.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>
