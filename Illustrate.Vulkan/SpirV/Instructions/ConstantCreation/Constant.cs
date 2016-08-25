@@ -1,4 +1,6 @@
-﻿using Illustrate.Vulkan.SpirV.Native;
+﻿using System;
+using System.Linq;
+using Illustrate.Vulkan.SpirV.Native;
 
 namespace Illustrate.Vulkan.SpirV.Instructions.ConstantCreation
 {
@@ -7,6 +9,11 @@ namespace Illustrate.Vulkan.SpirV.Instructions.ConstantCreation
 	/// </summary>
 	public class Constant : BaseInstruction
 	{
+	    public Constant(int resultTypeId, int resultId, params float[] value)
+	            : this(resultTypeId, resultId,
+	                   value.Select(BitConverter.GetBytes)
+                            .Select(b => BitConverter.ToInt32(b, 0)).ToArray())
+        { }
 		public Constant(int resultTypeId, int resultId, params int[] value) {
 			ResultTypeId = resultTypeId;
 			ResultId = resultId;
@@ -21,6 +28,7 @@ namespace Illustrate.Vulkan.SpirV.Instructions.ConstantCreation
 		/// </summary>
 		public int ResultTypeId { get; set; }
 		public int ResultId { get; set; }
+
 		/// <summary>
 		/// Value is the bit pattern for the constant.
 		/// Types 32 bits wide or smaller take one word.

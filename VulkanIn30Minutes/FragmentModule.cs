@@ -1,5 +1,6 @@
 ﻿using Illustrate.Vulkan.SpirV;
 using Illustrate.Vulkan.SpirV.Instructions.Annotation;
+using Illustrate.Vulkan.SpirV.Instructions.ConstantCreation;
 using Illustrate.Vulkan.SpirV.Instructions.ControlFlow;
 using Illustrate.Vulkan.SpirV.Instructions.Debug;
 using Illustrate.Vulkan.SpirV.Instructions.Extension;
@@ -43,6 +44,9 @@ namespace VulkanIn30Minutes
                     new TypeFloat(6, 32),
                     new TypeVector(7, 6, 4),
                     new TypePointer(8, StorageClass.Output, 7),
+                    new Constant(6, 19, 1f),
+                    new Constant(6, 21, 0f), 
+                    new ConstantComposite(7, 20, 19, 21, 21, 19),
                     new Variable(8, 9, StorageClass.Output),
                     new TypeImage(10, 6, Dim.Dim2D, ImageDepth.Missing, false, Samples.Single, SamplerPresence.Always, ImageFormat.Unknown),
                     new TypeSampledImage(11, 10),
@@ -55,8 +59,7 @@ namespace VulkanIn30Minutes
                     new Label(5),
                     new Load(11, 14, 13),
                     new Load(15, 18, 17),
-                    new ImageSampleImplicitLod(7, 19, 14, 18),
-                    new Store(9, 19),
+                    new Store(9, 20),
                     new Return(),
                     new FunctionEnd(),
                 }
@@ -64,7 +67,7 @@ namespace VulkanIn30Minutes
         }
 
         public byte[] Compile() {
-            return _module.Compile(20);
+            return _module.Compile(30);
         }
     }
 }
