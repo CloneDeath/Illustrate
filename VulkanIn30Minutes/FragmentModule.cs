@@ -5,7 +5,6 @@ using Illustrate.Vulkan.SpirV.Instructions.ControlFlow;
 using Illustrate.Vulkan.SpirV.Instructions.Debug;
 using Illustrate.Vulkan.SpirV.Instructions.Extension;
 using Illustrate.Vulkan.SpirV.Instructions.Function;
-using Illustrate.Vulkan.SpirV.Instructions.Image;
 using Illustrate.Vulkan.SpirV.Instructions.Memory;
 using Illustrate.Vulkan.SpirV.Instructions.ModeSetting;
 using Illustrate.Vulkan.SpirV.Instructions.TypeDeclaration;
