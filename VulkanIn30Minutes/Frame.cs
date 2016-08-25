@@ -25,7 +25,7 @@ namespace VulkanIn30Minutes
                     A = ComponentSwizzle.A
                 },
                 Format = Format.B8G8R8A8Unorm,
-                ViewType = ImageViewType.View2D
+                ViewType = ImageViewType.View2D,
             });
             Framebuffer = device.CreateFramebuffer(new FramebufferCreateInfo
             {
@@ -37,7 +37,6 @@ namespace VulkanIn30Minutes
                 RenderPass = renderpass,
                 Layers = 1
             });
-
         }
 
         public Image Image { get; }

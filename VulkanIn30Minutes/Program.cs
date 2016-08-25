@@ -1,9 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Illustrate.Vulkan;
 using Illustrate.Windows;
 using VulkanSharp;
 using Extension = VulkanSharp.Extension;
+using Version = VulkanSharp.Version;
 
 namespace VulkanIn30Minutes
 {
@@ -26,9 +29,12 @@ namespace VulkanIn30Minutes
                 Attachments = new[] {
                     new AttachmentDescription {
                         Format = Format.B8G8R8A8Unorm,
-                        FinalLayout = ImageLayout.ColorAttachmentOptimal,
-                        InitialLayout = ImageLayout.ColorAttachmentOptimal,
-                        LoadOp = AttachmentLoadOp.DontCare,
+                        FinalLayout = ImageLayout.PresentSrcKhr,
+                        InitialLayout = ImageLayout.Undefined,
+                        LoadOp = AttachmentLoadOp.Clear,
+                        StoreOp = AttachmentStoreOp.Store,
+                        StencilLoadOp = AttachmentLoadOp.DontCare,
+                        StencilStoreOp = AttachmentStoreOp.DontCare,
                         Samples = SampleCountFlags.Count1
                     }
                 },
@@ -53,24 +59,32 @@ namespace VulkanIn30Minutes
 
             var frames = GetFrames(device, swapchain, surfaceInfo.CurrentExtent, renderpass);
 
-            
-			
-			var descSetLayout = device.CreateDescriptorSetLayout(new DescriptorSetLayoutCreateInfo
-			{
-				Bindings = new[] {
-					new DescriptorSetLayoutBinding {
-						Binding = 0,
-                        DescriptorType = 
-					}, 
-				}
-			});
-			
-			var pipelineLayout = device.CreatePipelineLayout(new PipelineLayoutCreateInfo {
-				PushConstantRanges = new PushConstantRange[] {
-					new PushConstantRange {
-						StageFlags = ShaderStageFlags.AllGraphics
-					}
-				}
+            var sampler = device.CreateSampler(new SamplerCreateInfo {
+                BorderColor = BorderColor.FloatTransparentBlack,
+                AddressModeU = SamplerAddressMode.Repeat,
+                AddressModeV = SamplerAddressMode.Repeat,
+                AddressModeW = SamplerAddressMode.Repeat
+            });
+
+            var descSetLayout = device.CreateDescriptorSetLayout(new DescriptorSetLayoutCreateInfo
+            {
+                Bindings = new[] {
+                    new DescriptorSetLayoutBinding {
+                        Binding = 0,
+                        DescriptorType = DescriptorType.CombinedImageSampler,
+                        DescriptorCount = 1,
+                        StageFlags = ShaderStageFlags.Fragment,
+                        ImmutableSamplers = new[] {
+                            sampler
+                        }
+                    }
+                }
+            });
+
+            var pipelineLayout = device.CreatePipelineLayout(new PipelineLayoutCreateInfo {
+			    SetLayouts = new[] {
+                    descSetLayout
+                }
 			});
 
             var vertexModule = device.CreateShaderModule(new VertexModule().Compile());
@@ -90,19 +104,25 @@ namespace VulkanIn30Minutes
 				},
 				VertexInputState = new PipelineVertexInputStateCreateInfo
 				{
-                    VertexAttributeDescriptions = new [] {
-                        new VertexInputAttributeDescription {
-                            Binding = 0,
-                            Format = Format.R32G32B32Sfloat,
-                            Location = 0,
-                            Offset = 0
-                        } 
-                    },
                     VertexBindingDescriptions = new[] {
                         new VertexInputBindingDescription {
                             Binding = 0,
                             InputRate = VertexInputRate.Vertex,
                             Stride = 4*3
+                        }
+                    },
+                    VertexAttributeDescriptions = new[] {
+                        new VertexInputAttributeDescription {
+                            Binding = 0,
+                            Offset = 0,
+                            Format = Format.R32G32B32Sfloat,
+                            Location = 0
+                        },
+                        new VertexInputAttributeDescription {
+                            Binding = 0,
+                            Offset = 4*2,
+                            Format = Format.R32G32B32Sfloat,
+                            Location = 1
                         }
                     }
 				},
@@ -111,7 +131,6 @@ namespace VulkanIn30Minutes
                     PrimitiveRestartEnable = false,
                     Topology = PrimitiveTopology.TriangleList
 				},
-				TessellationState = null,
 				ViewportState = new PipelineViewportStateCreateInfo
 				{
                     Viewports = new[] {
@@ -119,24 +138,36 @@ namespace VulkanIn30Minutes
                             X = 0,
                             Y = 0,
                             Width = surfaceInfo.CurrentExtent.Width,
-                            Height = surfaceInfo.CurrentExtent.Height
+                            Height = surfaceInfo.CurrentExtent.Height,
+                            MaxDepth = 1,
+                            MinDepth = 0
+                        }
+                    },
+                    Scissors = new[] {
+                        new Rect2D {
+                            Offset = new Offset2D() {X = 0, Y=0},
+                            Extent = surfaceInfo.CurrentExtent
                         }
                     }
 				},
-				RasterizationState = new PipelineRasterizationStateCreateInfo
+                RasterizationState = new PipelineRasterizationStateCreateInfo
 				{
                     CullMode = CullModeFlags.None,
                     DepthBiasEnable = false,
-                    PolygonMode = PolygonMode.Fill
+                    PolygonMode = PolygonMode.Fill,
+                    DepthClampEnable = false,
+                    RasterizerDiscardEnable = false,
+                    LineWidth = 1
 				},
 				MultisampleState = new PipelineMultisampleStateCreateInfo
 				{
-                    SampleShadingEnable = false
+                    SampleShadingEnable = false,
+                    RasterizationSamples = SampleCountFlags.Count1
 				},
 				DepthStencilState = new PipelineDepthStencilStateCreateInfo
 				{
                     StencilTestEnable = false,
-                    DepthTestEnable = false
+                    DepthTestEnable = false,
 				},
 				ColorBlendState = new PipelineColorBlendStateCreateInfo {
 					Attachments = new[] {
@@ -154,36 +185,59 @@ namespace VulkanIn30Minutes
 					}
 				},
 				DynamicState = new PipelineDynamicStateCreateInfo {
-					DynamicStates = new[] {
-						DynamicState.Viewport, 
-					}
+				    DynamicStates = new[] {
+				        DynamicState.Viewport, 
+				    }
 				},
-				RenderPass = renderpass
-			}).First();
+				RenderPass = renderpass,
+                Layout = pipelineLayout,
+            }).First();
 
-			var descPool = device.CreateDescriptorPool(new DescriptorPoolCreateInfo {});
+			var descPool = device.CreateDescriptorPool(new DescriptorPoolCreateInfo {
+			    PoolSizes = new [] {
+			        new DescriptorPoolSize {
+			            DescriptorCount = 2,
+                        Type = DescriptorType.CombinedImageSampler
+			        }
+			    },
+                MaxSets = 2
+			});
 
-			var descSet = device.AllocateDescriptorSets(new DescriptorSetAllocateInfo {}).First();
+			var descSets = device.AllocateDescriptorSets(new DescriptorSetAllocateInfo {
+			    DescriptorPool = descPool,
+                SetLayouts = new [] {
+                    descSetLayout,
+                    descSetLayout
+                },
+                DescriptorSetCount = (uint)frames.Length
+			});
 
-			var buffer = device.CreateBuffer(new BufferCreateInfo {
+            var buffer = device.CreateBuffer(new BufferCreateInfo {
 				Size = 4 * 3 * 3,
 				Usage = BufferUsageFlags.VertexBuffer,
 				SharingMode = SharingMode.Exclusive
 			});
-			var memory = device.AllocateMemory(new MemoryAllocateInfo {
-				AllocationSize = 4*3*3
-			});
+
+            var bufferRequirements = device.GetBufferMemoryRequirements(buffer);
+            var typesAllowed = GetMemoryTypesAllowed(physicalDevice, bufferRequirements.MemoryTypeBits);
+            var hostVisibleMem = typesAllowed.First(m => m.PropertyFlags.HasFlag(MemoryPropertyFlags.HostVisible));
+            
+            var memory = device.AllocateMemory(new MemoryAllocateInfo {
+				AllocationSize = bufferRequirements.Size,
+                MemoryTypeIndex = (uint)hostVisibleMem.MemoryTypeIndex
+            });
 			device.BindBufferMemory(buffer, memory, 0);
 			var data = device.MapMemory(memory, 0, 4*3*3, 0);
             unsafe {
                 var dptr = (byte*)data;
-                
+                var rawData = GetBytes(0, 0, 0, 0.5f, 0, 0, 0, 0.5f, 0);
+                for (var i = 0; i < rawData.Length; i++) {
+                    dptr[i] = rawData[i];
+                }
             }
 			
 			device.UnmapMemory(memory);
-
-			device.UpdateDescriptorSets(1, new WriteDescriptorSet(), 0, null);
-
+            
 			var commandPool = device.CreateCommandPool(new CommandPoolCreateInfo {
 				QueueFamilyIndex = queueFamily.QueueIndex
 			});
@@ -193,10 +247,24 @@ namespace VulkanIn30Minutes
 				CommandBufferCount = (uint)frames.Count(),
 				Level = CommandBufferLevel.Primary
 			});
-
+            
             for (var i = 0; i < frames.Count(); i++) {
                 var commandBuffer = commandBuffers[i];
                 var frame = frames[i];
+                
+                device.UpdateDescriptorSets(1, new WriteDescriptorSet
+                {
+                    DescriptorType = DescriptorType.CombinedImageSampler,
+                    ImageInfo = new[] {
+                        new DescriptorImageInfo {
+                            ImageView = frames[0].ImageView,
+                            ImageLayout = ImageLayout.General
+                        },
+                    },
+                    DstSet = descSets[i],
+                    DescriptorCount = 1
+                }, 0, new CopyDescriptorSet());
+
                 commandBuffer.Begin(new CommandBufferBeginInfo());
                 commandBuffer.CmdBeginRenderPass(new RenderPassBeginInfo
                 {
@@ -206,10 +274,13 @@ namespace VulkanIn30Minutes
                     {
                         Offset = new Offset2D() { X = 0, Y = 0 },
                         Extent = surfaceInfo.CurrentExtent
+                    },
+                    ClearValues = new[] {
+                        new ClearValue { Color = new ClearColorValue(new float[] {0, 0, 0, 0})}, 
                     }
                 }, SubpassContents.Inline);
                 commandBuffer.CmdBindPipeline(PipelineBindPoint.Graphics, pipeline);
-                commandBuffer.CmdBindDescriptorSets(PipelineBindPoint.Graphics, new PipelineLayout { }, 0, 1, descSet, 0, 0);
+                commandBuffer.CmdBindDescriptorSets(PipelineBindPoint.Graphics, pipelineLayout, 0, 1, descSets[i], 0, 0);
                 commandBuffer.CmdSetViewport(0, 1, new Viewport
                 {
                     X = 0,
@@ -219,24 +290,57 @@ namespace VulkanIn30Minutes
                     MinDepth = 0,
                     MaxDepth = 1
                 });
+                commandBuffer.CmdBindVertexBuffers(0, 1, buffer, 0);
                 commandBuffer.CmdDraw(3, 1, 0, 0);
                 commandBuffer.CmdEndRenderPass();
                 commandBuffer.End();
             }
 
             var semaphorePresentComplete = device.CreateSemaphore(new SemaphoreCreateInfo());
-            var currentSwapImage = device.AcquireNextImageKHR(swapchain, long.MaxValue, semaphorePresentComplete, new Fence() { _handle = 0 });
             var queue = device.GetQueue(queueFamily.QueueIndex, 0);
-            queue.Submit(1, new SubmitInfo {CommandBuffers = new[] { commandBuffers[currentSwapImage]}}, new Fence() {_handle = 0});
-			queue.PresentKHR(new PresentInfoKhr {
-				Swapchains = new[] {
-					swapchain
-				},
-				ImageIndices = new [] {
-					currentSwapImage
-				}
-			});
-		}
+
+            var fence = device.CreateFence(new FenceCreateInfo());
+            
+            while (!Console.KeyAvailable) {
+                var currentSwapImage = device.AcquireNextImageKHR(swapchain, long.MaxValue, semaphorePresentComplete, new Fence() { _handle = 0 });
+                queue.Submit(1, new SubmitInfo {
+                    CommandBuffers = new[] { commandBuffers[currentSwapImage] },
+                    WaitSemaphores = new [] {
+                        semaphorePresentComplete
+                    },
+                    WaitDstStageMask = new[] {
+                        PipelineStageFlags.AllGraphics
+                    }
+                }, fence);
+                queue.PresentKHR(new PresentInfoKhr
+                {
+                    Swapchains = new[] {
+                        swapchain
+                    },
+                    ImageIndices = new[] {
+                        currentSwapImage
+                    }
+                });
+
+                window.HandleEvents();
+                device.WaitForFences(1, fence, true, ulong.MaxValue);
+                device.ResetFences(1, fence);
+                Thread.Sleep(TimeSpan.FromSeconds(1/60f));
+            }
+        }
+
+	    private static IEnumerable<MemoryTypeInfo> GetMemoryTypesAllowed(PhysicalDevice physicalDevice, uint memoryTypeBits) {
+	        var memoryTypes = physicalDevice.GetMemoryProperties().MemoryTypes;
+	        return memoryTypes.Select((m, i) => new MemoryTypeInfo(i, m)).Where(m => ((memoryTypeBits >> m.MemoryTypeIndex) & 0x01) != 0);
+	    }
+
+	    private static byte[] GetBytes(params float[] rawData) {
+	        var ret = new List<byte>();
+	        foreach (var data in rawData) {
+	            ret.AddRange(BitConverter.GetBytes(data));
+	        }
+	        return ret.ToArray();
+	    }
 
 	    private static Frame[] GetFrames(Device device, SwapchainKhr swapchain, Extent2D imageSize, RenderPass renderpass) {
 	        var images = device.GetSwapchainImagesKHR(swapchain);
@@ -253,7 +357,7 @@ namespace VulkanIn30Minutes
                 ImageColorSpace = format.ColorSpace,
                 ImageExtent = surfaceInfo.CurrentExtent,
                 ImageArrayLayers = 1,
-                ImageUsage = ImageUsageFlags.ColorAttachment,
+                ImageUsage = ImageUsageFlags.ColorAttachment | ImageUsageFlags.Sampled,
                 ImageSharingMode = SharingMode.Exclusive,
                 PreTransform = surfaceInfo.CurrentTransform,
                 CompositeAlpha = CompositeAlphaFlagsKhr.Opaque,
