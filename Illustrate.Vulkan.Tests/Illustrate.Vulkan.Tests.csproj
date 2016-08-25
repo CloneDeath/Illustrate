@@ -59,6 +59,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Illustrate.Vulkan.SpirV\Illustrate.Vulkan.SpirV.csproj">
+      <Project>{1367DD6C-0A3B-46B3-8177-3BCB828C4C5E}</Project>
+      <Name>Illustrate.Vulkan.SpirV</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Illustrate.Vulkan\Illustrate.Vulkan.csproj">
       <Project>{640E41F4-0D45-48F4-B98A-8B7EEBDB0870}</Project>
       <Name>Illustrate.Vulkan</Name>
