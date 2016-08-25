@@ -33,7 +33,7 @@ namespace VulkanTutorial
 		public void Initialize(IWindow window) {
 			CreateSurface(window);
 
-			NodeIndex = PhysicalDevice.GetQueueFamilyPropertiesExt()
+			NodeIndex = (int)PhysicalDevice.GetQueueFamilyPropertiesExt()
 			                          .First(q => q.SupportsGraphics && q.Supports(Surface))
 			                          .QueueIndex;
 
