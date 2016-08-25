@@ -1,0 +1,355 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{1367DD6C-0A3B-46B3-8177-3BCB828C4C5E}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Illustrate.Vulkan.SpirV</RootNamespace>
+    <AssemblyName>Illustrate.Vulkan.SpirV</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ByteArray.cs" />
+    <Compile Include="Instructions\Annotation\Decorate.cs" />
+    <Compile Include="Instructions\Annotation\DecorationGroup.cs" />
+    <Compile Include="Instructions\Annotation\GroupDecorate.cs" />
+    <Compile Include="Instructions\Annotation\GroupMemberDecorate.cs" />
+    <Compile Include="Instructions\Annotation\MemberDecorate.cs" />
+    <Compile Include="Instructions\Arithmetic\Dot.cs" />
+    <Compile Include="Instructions\Arithmetic\FAdd.cs" />
+    <Compile Include="Instructions\Arithmetic\FDiv.cs" />
+    <Compile Include="Instructions\Arithmetic\FMod.cs" />
+    <Compile Include="Instructions\Arithmetic\FMul.cs" />
+    <Compile Include="Instructions\Arithmetic\FNegate.cs" />
+    <Compile Include="Instructions\Arithmetic\FRem.cs" />
+    <Compile Include="Instructions\Arithmetic\FSub.cs" />
+    <Compile Include="Instructions\Arithmetic\IAdd.cs" />
+    <Compile Include="Instructions\Arithmetic\IAddCarry.cs" />
+    <Compile Include="Instructions\Arithmetic\IMul.cs" />
+    <Compile Include="Instructions\Arithmetic\ISub.cs" />
+    <Compile Include="Instructions\Arithmetic\ISubBorrow.cs" />
+    <Compile Include="Instructions\Arithmetic\MatrixTimesMatrix.cs" />
+    <Compile Include="Instructions\Arithmetic\MatrixTimesScalar.cs" />
+    <Compile Include="Instructions\Arithmetic\MatrixTimesVector.cs" />
+    <Compile Include="Instructions\Arithmetic\OuterProduct.cs" />
+    <Compile Include="Instructions\Arithmetic\SDiv.cs" />
+    <Compile Include="Instructions\Arithmetic\SMod.cs" />
+    <Compile Include="Instructions\Arithmetic\SMulExtended.cs" />
+    <Compile Include="Instructions\Arithmetic\SNegate.cs" />
+    <Compile Include="Instructions\Arithmetic\SRem.cs" />
+    <Compile Include="Instructions\Arithmetic\UDiv.cs" />
+    <Compile Include="Instructions\Arithmetic\UMod.cs" />
+    <Compile Include="Instructions\Arithmetic\UMulExtended.cs" />
+    <Compile Include="Instructions\Arithmetic\VectorTimesMatrix.cs" />
+    <Compile Include="Instructions\Arithmetic\VectorTimesScalar.cs" />
+    <Compile Include="Instructions\Atomic\AtomicAnd.cs" />
+    <Compile Include="Instructions\Atomic\AtomicCompareExchange.cs" />
+    <Compile Include="Instructions\Atomic\AtomicCompareExchangeWeak.cs" />
+    <Compile Include="Instructions\Atomic\AtomicExchange.cs" />
+    <Compile Include="Instructions\Atomic\AtomicFlagClear.cs" />
+    <Compile Include="Instructions\Atomic\AtomicFlagTestAndSet.cs" />
+    <Compile Include="Instructions\Atomic\AtomicIAdd.cs" />
+    <Compile Include="Instructions\Atomic\AtomicIDecrement.cs" />
+    <Compile Include="Instructions\Atomic\AtomicIIncrement.cs" />
+    <Compile Include="Instructions\Atomic\AtomicISub.cs" />
+    <Compile Include="Instructions\Atomic\AtomicLoad.cs" />
+    <Compile Include="Instructions\Atomic\AtomicOr.cs" />
+    <Compile Include="Instructions\Atomic\AtomicSMax.cs" />
+    <Compile Include="Instructions\Atomic\AtomicSMin.cs" />
+    <Compile Include="Instructions\Atomic\AtomicStore.cs" />
+    <Compile Include="Instructions\Atomic\AtomicUMax.cs" />
+    <Compile Include="Instructions\Atomic\AtomicUMin.cs" />
+    <Compile Include="Instructions\Atomic\AtomicXor.cs" />
+    <Compile Include="Instructions\Barrier\ControlBarrier.cs" />
+    <Compile Include="Instructions\Barrier\MemoryBarrier.cs" />
+    <Compile Include="Instructions\BaseInstruction.cs" />
+    <Compile Include="Instructions\Bit\BitCount.cs" />
+    <Compile Include="Instructions\Bit\BitFieldInsert.cs" />
+    <Compile Include="Instructions\Bit\BitFieldSExtract.cs" />
+    <Compile Include="Instructions\Bit\BitFieldUExtract.cs" />
+    <Compile Include="Instructions\Bit\BitReverse.cs" />
+    <Compile Include="Instructions\Bit\BitwiseAnd.cs" />
+    <Compile Include="Instructions\Bit\BitwiseOr.cs" />
+    <Compile Include="Instructions\Bit\BitwiseXor.cs" />
+    <Compile Include="Instructions\Bit\Not.cs" />
+    <Compile Include="Instructions\Bit\ShiftLeftLogical.cs" />
+    <Compile Include="Instructions\Bit\ShiftRightArithmetic.cs" />
+    <Compile Include="Instructions\Bit\ShiftRightLogical.cs" />
+    <Compile Include="Instructions\Composite\CompositeConstruct.cs" />
+    <Compile Include="Instructions\Composite\CompositeExtract.cs" />
+    <Compile Include="Instructions\Composite\CompositeInsert.cs" />
+    <Compile Include="Instructions\Composite\CopyObject.cs" />
+    <Compile Include="Instructions\Composite\Transpose.cs" />
+    <Compile Include="Instructions\Composite\VectorExtractDynamic.cs" />
+    <Compile Include="Instructions\Composite\VectorInsertDynamic.cs" />
+    <Compile Include="Instructions\Composite\VectorShuffle.cs" />
+    <Compile Include="Instructions\ConstantCreation\Constant.cs" />
+    <Compile Include="Instructions\ConstantCreation\ConstantComposite.cs" />
+    <Compile Include="Instructions\ConstantCreation\ConstantFalse.cs" />
+    <Compile Include="Instructions\ConstantCreation\ConstantNull.cs" />
+    <Compile Include="Instructions\ConstantCreation\ConstantSampler.cs" />
+    <Compile Include="Instructions\ConstantCreation\ConstantTrue.cs" />
+    <Compile Include="Instructions\ConstantCreation\SpecConstant.cs" />
+    <Compile Include="Instructions\ConstantCreation\SpecConstantComposite.cs" />
+    <Compile Include="Instructions\ConstantCreation\SpecConstantFalse.cs" />
+    <Compile Include="Instructions\ConstantCreation\SpecConstantOp.cs" />
+    <Compile Include="Instructions\ConstantCreation\SpecConstantTrue.cs" />
+    <Compile Include="Instructions\ControlFlow\Branch.cs" />
+    <Compile Include="Instructions\ControlFlow\BranchConditional.cs" />
+    <Compile Include="Instructions\ControlFlow\Kill.cs" />
+    <Compile Include="Instructions\ControlFlow\Label.cs" />
+    <Compile Include="Instructions\ControlFlow\LifetimeStart.cs" />
+    <Compile Include="Instructions\ControlFlow\LifetimeStop.cs" />
+    <Compile Include="Instructions\ControlFlow\LoopMerge.cs" />
+    <Compile Include="Instructions\ControlFlow\Phi.cs" />
+    <Compile Include="Instructions\ControlFlow\Return.cs" />
+    <Compile Include="Instructions\ControlFlow\ReturnValue.cs" />
+    <Compile Include="Instructions\ControlFlow\SelectionMerge.cs" />
+    <Compile Include="Instructions\ControlFlow\Switch.cs" />
+    <Compile Include="Instructions\ControlFlow\Unreachable.cs" />
+    <Compile Include="Instructions\Conversion\Bitcast.cs" />
+    <Compile Include="Instructions\Conversion\ConvertFToS.cs" />
+    <Compile Include="Instructions\Conversion\ConvertFToU.cs" />
+    <Compile Include="Instructions\Conversion\ConvertPtrToU.cs" />
+    <Compile Include="Instructions\Conversion\ConvertSToF.cs" />
+    <Compile Include="Instructions\Conversion\ConvertUToF.cs" />
+    <Compile Include="Instructions\Conversion\ConvertUToPtr.cs" />
+    <Compile Include="Instructions\Conversion\FConvert.cs" />
+    <Compile Include="Instructions\Conversion\GenericCastToPtr.cs" />
+    <Compile Include="Instructions\Conversion\GenericCastToPtrExplicit.cs" />
+    <Compile Include="Instructions\Conversion\PtrCastToGeneric.cs" />
+    <Compile Include="Instructions\Conversion\QuantizeToF16.cs" />
+    <Compile Include="Instructions\Conversion\SatConvertSToU.cs" />
+    <Compile Include="Instructions\Conversion\SatConvertUToS.cs" />
+    <Compile Include="Instructions\Conversion\SConvert.cs" />
+    <Compile Include="Instructions\Conversion\UConvert.cs" />
+    <Compile Include="Instructions\Debug\Line.cs" />
+    <Compile Include="Instructions\Debug\MemberName.cs" />
+    <Compile Include="Instructions\Debug\Name.cs" />
+    <Compile Include="Instructions\Debug\NoLine.cs" />
+    <Compile Include="Instructions\Debug\Source.cs" />
+    <Compile Include="Instructions\Debug\SourceContinued.cs" />
+    <Compile Include="Instructions\Debug\SourceExtension.cs" />
+    <Compile Include="Instructions\Debug\String.cs" />
+    <Compile Include="Instructions\Derivative\DPdx.cs" />
+    <Compile Include="Instructions\Derivative\DPdxCoarse.cs" />
+    <Compile Include="Instructions\Derivative\DPdxFine.cs" />
+    <Compile Include="Instructions\Derivative\DPdy.cs" />
+    <Compile Include="Instructions\Derivative\DPdyCoarse.cs" />
+    <Compile Include="Instructions\Derivative\DPdyFine.cs" />
+    <Compile Include="Instructions\Derivative\Fwidth.cs" />
+    <Compile Include="Instructions\Derivative\FwidthCoarse.cs" />
+    <Compile Include="Instructions\Derivative\FwidthFine.cs" />
+    <Compile Include="Instructions\DeviceSideEnqueue\BuildNDRange.cs" />
+    <Compile Include="Instructions\DeviceSideEnqueue\CaptureEventProfilingInfo.cs" />
+    <Compile Include="Instructions\DeviceSideEnqueue\CreateUserEvent.cs" />
+    <Compile Include="Instructions\DeviceSideEnqueue\EnqueueKernel.cs" />
+    <Compile Include="Instructions\DeviceSideEnqueue\EnqueueMarker.cs" />
+    <Compile Include="Instructions\DeviceSideEnqueue\GetDefaultQueue.cs" />
+    <Compile Include="Instructions\DeviceSideEnqueue\GetKernelNDrangeMaxSubGroupSize.cs" />
+    <Compile Include="Instructions\DeviceSideEnqueue\GetKernelNDrangeSubGroupCount.cs" />
+    <Compile Include="Instructions\DeviceSideEnqueue\GetKernelPreferredWorkGroupSizeMultiple.cs" />
+    <Compile Include="Instructions\DeviceSideEnqueue\GetKernelWorkGroupSize.cs" />
+    <Compile Include="Instructions\DeviceSideEnqueue\IsValidEvent.cs" />
+    <Compile Include="Instructions\DeviceSideEnqueue\ReleaseEvent.cs" />
+    <Compile Include="Instructions\DeviceSideEnqueue\RetainEvent.cs" />
+    <Compile Include="Instructions\DeviceSideEnqueue\SetUserEventStatus.cs" />
+    <Compile Include="Instructions\Extension\Extension.cs" />
+    <Compile Include="Instructions\Extension\ExtInst.cs" />
+    <Compile Include="Instructions\Extension\ExtInstImport.cs" />
+    <Compile Include="Instructions\Function\Function.cs" />
+    <Compile Include="Instructions\Function\FunctionCall.cs" />
+    <Compile Include="Instructions\Function\FunctionEnd.cs" />
+    <Compile Include="Instructions\Function\FunctionParameter.cs" />
+    <Compile Include="Instructions\Group\GroupAll.cs" />
+    <Compile Include="Instructions\Group\GroupAny.cs" />
+    <Compile Include="Instructions\Group\GroupAsyncCopy.cs" />
+    <Compile Include="Instructions\Group\GroupBroadcast.cs" />
+    <Compile Include="Instructions\Group\GroupFAdd.cs" />
+    <Compile Include="Instructions\Group\GroupFMax.cs" />
+    <Compile Include="Instructions\Group\GroupFMin.cs" />
+    <Compile Include="Instructions\Group\GroupIAdd.cs" />
+    <Compile Include="Instructions\Group\GroupSMax.cs" />
+    <Compile Include="Instructions\Group\GroupSMin.cs" />
+    <Compile Include="Instructions\Group\GroupUMax.cs" />
+    <Compile Include="Instructions\Group\GroupUMin.cs" />
+    <Compile Include="Instructions\Group\GroupWaitEvents.cs" />
+    <Compile Include="Instructions\Image\Image.cs" />
+    <Compile Include="Instructions\Image\ImageDrefGather.cs" />
+    <Compile Include="Instructions\Image\ImageFetch.cs" />
+    <Compile Include="Instructions\Image\ImageGather.cs" />
+    <Compile Include="Instructions\Image\ImageQueryFormat.cs" />
+    <Compile Include="Instructions\Image\ImageQueryLevels.cs" />
+    <Compile Include="Instructions\Image\ImageQueryLod.cs" />
+    <Compile Include="Instructions\Image\ImageQueryOrder.cs" />
+    <Compile Include="Instructions\Image\ImageQuerySamples.cs" />
+    <Compile Include="Instructions\Image\ImageQuerySize.cs" />
+    <Compile Include="Instructions\Image\ImageQuerySizeLod.cs" />
+    <Compile Include="Instructions\Image\ImageRead.cs" />
+    <Compile Include="Instructions\Image\ImageSampleDrefExplicitLod.cs" />
+    <Compile Include="Instructions\Image\ImageSampleDrefImplicitLod.cs" />
+    <Compile Include="Instructions\Image\ImageSampleExplicitLod.cs" />
+    <Compile Include="Instructions\Image\ImageSampleImplicitLod.cs" />
+    <Compile Include="Instructions\Image\ImageSampleProjDrefExplicitLod.cs" />
+    <Compile Include="Instructions\Image\ImageSampleProjDrefImplicitLod.cs" />
+    <Compile Include="Instructions\Image\ImageSampleProjExplicitLod.cs" />
+    <Compile Include="Instructions\Image\ImageSampleProjImplicitLod.cs" />
+    <Compile Include="Instructions\Image\ImageSparseDrefGather.cs" />
+    <Compile Include="Instructions\Image\ImageSparseFetch.cs" />
+    <Compile Include="Instructions\Image\ImageSparseGather.cs" />
+    <Compile Include="Instructions\Image\ImageSparseRead.cs" />
+    <Compile Include="Instructions\Image\ImageSparseSampleDrefExplicitLod.cs" />
+    <Compile Include="Instructions\Image\ImageSparseSampleDrefImplicitLod.cs" />
+    <Compile Include="Instructions\Image\ImageSparseSampleExplicitLod.cs" />
+    <Compile Include="Instructions\Image\ImageSparseSampleImplicitLod.cs" />
+    <Compile Include="Instructions\Image\ImageSparseSampleProjDrefExplicitLod.cs" />
+    <Compile Include="Instructions\Image\ImageSparseSampleProjDrefImplicitLod.cs" />
+    <Compile Include="Instructions\Image\ImageSparseSampleProjExplicitLod.cs" />
+    <Compile Include="Instructions\Image\ImageSparseSampleProjImplicitLod.cs" />
+    <Compile Include="Instructions\Image\ImageSparseTexelsResident.cs" />
+    <Compile Include="Instructions\Image\ImageWrite.cs" />
+    <Compile Include="Instructions\Image\SampledImage.cs" />
+    <Compile Include="Instructions\Logical\All.cs" />
+    <Compile Include="Instructions\Logical\Any.cs" />
+    <Compile Include="Instructions\Logical\FOrdEqual.cs" />
+    <Compile Include="Instructions\Logical\FOrdGreaterThan.cs" />
+    <Compile Include="Instructions\Logical\FOrdGreaterThanEqual.cs" />
+    <Compile Include="Instructions\Logical\FOrdLessThan.cs" />
+    <Compile Include="Instructions\Logical\FOrdLessThanEqual.cs" />
+    <Compile Include="Instructions\Logical\FOrdNotEqual.cs" />
+    <Compile Include="Instructions\Logical\FUnordEqual.cs" />
+    <Compile Include="Instructions\Logical\FUnordGreaterThan.cs" />
+    <Compile Include="Instructions\Logical\FUnordGreaterThanEqual.cs" />
+    <Compile Include="Instructions\Logical\FUnordLessThan.cs" />
+    <Compile Include="Instructions\Logical\FUnordLessThanEqual.cs" />
+    <Compile Include="Instructions\Logical\FUnordNotEqual.cs" />
+    <Compile Include="Instructions\Logical\IEqual.cs" />
+    <Compile Include="Instructions\Logical\INotEqual.cs" />
+    <Compile Include="Instructions\Logical\IsFinite.cs" />
+    <Compile Include="Instructions\Logical\IsInf.cs" />
+    <Compile Include="Instructions\Logical\IsNan.cs" />
+    <Compile Include="Instructions\Logical\IsNormal.cs" />
+    <Compile Include="Instructions\Logical\LessOrGreater.cs" />
+    <Compile Include="Instructions\Logical\LogicalAnd.cs" />
+    <Compile Include="Instructions\Logical\LogicalEqual.cs" />
+    <Compile Include="Instructions\Logical\LogicalNot.cs" />
+    <Compile Include="Instructions\Logical\LogicalNotEqual.cs" />
+    <Compile Include="Instructions\Logical\LogicalOr.cs" />
+    <Compile Include="Instructions\Logical\Ordered.cs" />
+    <Compile Include="Instructions\Logical\Select.cs" />
+    <Compile Include="Instructions\Logical\SGreaterThan.cs" />
+    <Compile Include="Instructions\Logical\SGreaterThanEqual.cs" />
+    <Compile Include="Instructions\Logical\SignBitSet.cs" />
+    <Compile Include="Instructions\Logical\SLessThan.cs" />
+    <Compile Include="Instructions\Logical\SLessThanEqual.cs" />
+    <Compile Include="Instructions\Logical\UGreaterThan.cs" />
+    <Compile Include="Instructions\Logical\UGreaterThanEqual.cs" />
+    <Compile Include="Instructions\Logical\ULessThan.cs" />
+    <Compile Include="Instructions\Logical\ULessThanEqual.cs" />
+    <Compile Include="Instructions\Logical\Unordered.cs" />
+    <Compile Include="Instructions\Memory\AccessChain.cs" />
+    <Compile Include="Instructions\Memory\ArrayLength.cs" />
+    <Compile Include="Instructions\Memory\CopyMemory.cs" />
+    <Compile Include="Instructions\Memory\CopyMemorySized.cs" />
+    <Compile Include="Instructions\Memory\GenericPtrMemSemantics.cs" />
+    <Compile Include="Instructions\Memory\ImageTexelPointer.cs" />
+    <Compile Include="Instructions\Memory\InBoundsAccessChain.cs" />
+    <Compile Include="Instructions\Memory\InBoundsPtrAccessChain.cs" />
+    <Compile Include="Instructions\Memory\Load.cs" />
+    <Compile Include="Instructions\Memory\PtrAccessChain.cs" />
+    <Compile Include="Instructions\Memory\Store.cs" />
+    <Compile Include="Instructions\Memory\Variable.cs" />
+    <Compile Include="Instructions\Miscellaneous\Nop.cs" />
+    <Compile Include="Instructions\Miscellaneous\Undef.cs" />
+    <Compile Include="Instructions\ModeSetting\Capability.cs" />
+    <Compile Include="Instructions\ModeSetting\Capability.List.cs" />
+    <Compile Include="Instructions\ModeSetting\EntryPoint.cs" />
+    <Compile Include="Instructions\ModeSetting\ExecutionMode.cs" />
+    <Compile Include="Instructions\ModeSetting\MemoryModel.cs" />
+    <Compile Include="Instructions\Pipe\CommitReadPipe.cs" />
+    <Compile Include="Instructions\Pipe\CommitWritePipe.cs" />
+    <Compile Include="Instructions\Pipe\GetMaxPipePackets.cs" />
+    <Compile Include="Instructions\Pipe\GetNumPipePackets.cs" />
+    <Compile Include="Instructions\Pipe\GroupCommitReadPipe.cs" />
+    <Compile Include="Instructions\Pipe\GroupCommitWritePipe.cs" />
+    <Compile Include="Instructions\Pipe\GroupReserveReadPipePackets.cs" />
+    <Compile Include="Instructions\Pipe\GroupReserveWritePipePackets.cs" />
+    <Compile Include="Instructions\Pipe\IsValidReserveId.cs" />
+    <Compile Include="Instructions\Pipe\ReadPipe.cs" />
+    <Compile Include="Instructions\Pipe\ReservedReadPipe.cs" />
+    <Compile Include="Instructions\Pipe\ReservedWritePipe.cs" />
+    <Compile Include="Instructions\Pipe\ReserveReadPipePackets.cs" />
+    <Compile Include="Instructions\Pipe\ReserveWritePipePackets.cs" />
+    <Compile Include="Instructions\Pipe\WritePipe.cs" />
+    <Compile Include="Instructions\Primitive\EmitStreamVertex.cs" />
+    <Compile Include="Instructions\Primitive\EmitVertex.cs" />
+    <Compile Include="Instructions\Primitive\EndPrimitive.cs" />
+    <Compile Include="Instructions\Primitive\EndStreamPrimitive.cs" />
+    <Compile Include="Instructions\SingleResultInstruction.cs" />
+    <Compile Include="Instructions\TypeDeclaration\TypeArray.cs" />
+    <Compile Include="Instructions\TypeDeclaration\TypeBool.cs" />
+    <Compile Include="Instructions\TypeDeclaration\TypeDeviceEvent.cs" />
+    <Compile Include="Instructions\TypeDeclaration\TypeEvent.cs" />
+    <Compile Include="Instructions\TypeDeclaration\TypeFloat.cs" />
+    <Compile Include="Instructions\TypeDeclaration\TypeForwardPointer.cs" />
+    <Compile Include="Instructions\TypeDeclaration\TypeFunction.cs" />
+    <Compile Include="Instructions\TypeDeclaration\TypeImage.cs" />
+    <Compile Include="Instructions\TypeDeclaration\TypeInt.cs" />
+    <Compile Include="Instructions\TypeDeclaration\TypeMatrix.cs" />
+    <Compile Include="Instructions\TypeDeclaration\TypeOpaque.cs" />
+    <Compile Include="Instructions\TypeDeclaration\TypePipe.cs" />
+    <Compile Include="Instructions\TypeDeclaration\TypePointer.cs" />
+    <Compile Include="Instructions\TypeDeclaration\TypeQueue.cs" />
+    <Compile Include="Instructions\TypeDeclaration\TypeReserveId.cs" />
+    <Compile Include="Instructions\TypeDeclaration\TypeRuntimeArray.cs" />
+    <Compile Include="Instructions\TypeDeclaration\TypeSampledImage.cs" />
+    <Compile Include="Instructions\TypeDeclaration\TypeSampler.cs" />
+    <Compile Include="Instructions\TypeDeclaration\TypeStruct.cs" />
+    <Compile Include="Instructions\TypeDeclaration\TypeVector.cs" />
+    <Compile Include="Instructions\TypeDeclaration\TypeVoid.cs" />
+    <Compile Include="ISpirVInstruction.cs" />
+    <Compile Include="Native\Constants.cs" />
+    <Compile Include="Native\Enums.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SpirVModule.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

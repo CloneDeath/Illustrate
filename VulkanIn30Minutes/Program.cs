@@ -13,7 +13,6 @@ namespace VulkanIn30Minutes
 	public class Program
 	{
         // https://renderdoc.org/vulkan-in-30-minutes.html
-
         public static void Main()
 		{
 			var instance = GetInstance();
