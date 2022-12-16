@@ -1,7 +1,11 @@
 using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
+using Silk.NET.Core.Native;
 using Silk.NET.Maths;
 using Silk.NET.Vulkan;
+using Silk.NET.Vulkan.Extensions.EXT;
 using Silk.NET.Windowing;
 
 namespace SilkTutorial; 
@@ -11,10 +15,18 @@ public unsafe class HelloTriangleApplication
 	private const int WIDTH = 800;
 	private const int HEIGHT = 600;
 
+	private readonly string[] ValidationLayers = new[] {
+		"VK_LAYER_KHRONOS_validation"
+	};
+	public bool EnableValidationLayers = true;
+
 	private IWindow? window;
-	private Vk vk;
+	private Vk? vk;
 
 	private Instance instance;
+	
+	private ExtDebugUtils? debugUtils;
+	private DebugUtilsMessengerEXT debugMessenger;
 
 	public void Run()
 	{
@@ -41,27 +53,43 @@ public unsafe class HelloTriangleApplication
 
 	private void InitVulkan() {
 		CreateInstance();
+		SetupDebugMessenger();
 	}
 
 	private void CreateInstance() {
 		vk = Vk.GetApi();
+
+		if (EnableValidationLayers && !CheckValidationLayerSupport()) {
+			throw new Exception("Validation layers not found");
+		}
 		var appInfo = new ApplicationInfo {
 			SType = StructureType.ApplicationInfo,
 			PApplicationName = (byte*)Marshal.StringToHGlobalAnsi("Hello Triangle"),
-			ApplicationVersion = Vk.MakeVersion(1, 0, 0),
+			ApplicationVersion = Vk.MakeVersion(1, 0),
 			PEngineName = (byte*)Marshal.StringToHGlobalAnsi("No Engine"),
-			EngineVersion = Vk.MakeVersion(1, 0, 0),
-			ApiVersion = Vk.MakeVersion(1, 0,0)
+			EngineVersion = Vk.MakeVersion(1, 0),
+			ApiVersion = Vk.MakeVersion(1, 0)
 		};
 
-		var glfwExtensions = window!.VkSurface!.GetRequiredExtensions(out var glfwExtensionCount);
+		var extensions = GetRequiredExtensions();
 		var createInfo = new InstanceCreateInfo {
 			SType = StructureType.InstanceCreateInfo,
 			PApplicationInfo = &appInfo,
-			EnabledExtensionCount = glfwExtensionCount,
-			PpEnabledExtensionNames = glfwExtensions,
-			EnabledLayerCount = 0
+			EnabledExtensionCount = (uint)extensions.Length,
+			PpEnabledExtensionNames = (byte**)SilkMarshal.StringArrayToPtr(extensions)
 		};
+		
+		DebugUtilsMessengerCreateInfoEXT debugCreateInfo = new ();
+		if (EnableValidationLayers) {
+			createInfo.EnabledLayerCount = (uint)ValidationLayers.Length;
+			createInfo.PpEnabledLayerNames = (byte**)SilkMarshal.StringArrayToPtr(ValidationLayers);
+
+			PopulateDebugMessengerCreateInfo(ref debugCreateInfo);
+			createInfo.PNext = &debugCreateInfo;
+		}
+		else {
+			createInfo.EnabledLayerCount = 0;
+		}
 
 		if (vk.CreateInstance(createInfo, null, out instance) != Result.Success) {
 			throw new Exception("Failed to create Vulkan Instance");
@@ -69,6 +97,57 @@ public unsafe class HelloTriangleApplication
 		
 		Marshal.FreeHGlobal((IntPtr)appInfo.PApplicationName);
 		Marshal.FreeHGlobal((IntPtr)appInfo.PEngineName);
+		SilkMarshal.Free((nint)createInfo.PpEnabledExtensionNames);
+		if (EnableValidationLayers) {
+			SilkMarshal.Free((nint)createInfo.PpEnabledLayerNames);
+		}
+	}
+	
+	private string[] GetRequiredExtensions() {
+		var glfwExtensions = window!.VkSurface!.GetRequiredExtensions(out var glfwExtensionCount);
+		var extensions = SilkMarshal.PtrToStringArray((nint)glfwExtensions, (int)glfwExtensionCount);
+
+		return EnableValidationLayers 
+			? extensions.Append(ExtDebugUtils.ExtensionName).ToArray() 
+			: extensions;
+	}
+
+	private bool CheckValidationLayerSupport() {
+		uint layerCount = 0;
+		vk!.EnumerateInstanceLayerProperties(ref layerCount, null);
+		
+		var availableLayers = new LayerProperties[layerCount];
+		fixed (LayerProperties* availableLayersPtr = availableLayers)
+		{
+			vk!.EnumerateInstanceLayerProperties(ref layerCount, availableLayersPtr);
+		}
+
+		var availableLayerNames = availableLayers.Select(layer => Marshal.PtrToStringAnsi((IntPtr)layer.LayerName)).ToHashSet();
+
+		return ValidationLayers.All(availableLayerNames.Contains);
+	}
+
+	private void SetupDebugMessenger() {
+		if (!EnableValidationLayers) return;
+
+		if (!vk!.TryGetInstanceExtension(instance, out debugUtils)) return;
+		
+		var createInfo = new DebugUtilsMessengerCreateInfoEXT();
+		PopulateDebugMessengerCreateInfo(ref createInfo);
+
+		if (debugUtils!.CreateDebugUtilsMessenger(instance, createInfo, null, out debugMessenger) != Result.Success) {
+			throw new Exception("Could not hook in debug messenger");
+		}
+	}
+
+	private void PopulateDebugMessengerCreateInfo(ref DebugUtilsMessengerCreateInfoEXT createInfo) {
+		createInfo.SType = StructureType.DebugUtilsMessengerCreateInfoExt;
+		createInfo.MessageSeverity = DebugUtilsMessageSeverityFlagsEXT.ErrorBitExt
+		                             | DebugUtilsMessageSeverityFlagsEXT.WarningBitExt;
+		createInfo.MessageType = DebugUtilsMessageTypeFlagsEXT.GeneralBitExt
+		                         | DebugUtilsMessageTypeFlagsEXT.PerformanceBitExt
+		                         | DebugUtilsMessageTypeFlagsEXT.ValidationBitExt;
+		createInfo.PfnUserCallback = (DebugUtilsMessengerCallbackFunctionEXT)DebugCallback;
 	}
 
 	private void MainLoop() {
@@ -76,8 +155,32 @@ public unsafe class HelloTriangleApplication
 	}
 
 	private void CleanUp() {
-		vk.DestroyInstance(instance, null);
-		vk.Dispose();
+		if (EnableValidationLayers) {
+			debugUtils!.DestroyDebugUtilsMessenger(instance, debugMessenger, null);
+		}
+		vk!.DestroyInstance(instance, null);
+		vk!.Dispose();
 		window?.Dispose();
+	}
+	
+	private static uint DebugCallback(DebugUtilsMessageSeverityFlagsEXT messageSeverity, 
+								DebugUtilsMessageTypeFlagsEXT messageTypes, 
+								DebugUtilsMessengerCallbackDataEXT* pCallbackData, 
+								void* pUserData) {
+		var severity = messageSeverity switch {
+			DebugUtilsMessageSeverityFlagsEXT.None => "None",
+			DebugUtilsMessageSeverityFlagsEXT.ErrorBitExt => "Error",
+			DebugUtilsMessageSeverityFlagsEXT.WarningBitExt => "Warning",
+			DebugUtilsMessageSeverityFlagsEXT.InfoBitExt => "Info",
+			DebugUtilsMessageSeverityFlagsEXT.VerboseBitExt => "Verbose"
+		};
+		var type = messageTypes switch {
+			DebugUtilsMessageTypeFlagsEXT.None => "None",
+			DebugUtilsMessageTypeFlagsEXT.GeneralBitExt => "General",
+			DebugUtilsMessageTypeFlagsEXT.PerformanceBitExt => "Performance",
+			DebugUtilsMessageTypeFlagsEXT.ValidationBitExt => "Validation"
+		};
+		Console.WriteLine($"Vulkan {severity} {type}: " + Marshal.PtrToStringAnsi((nint)pCallbackData->PMessage));
+		return Vk.False;
 	}
 }
