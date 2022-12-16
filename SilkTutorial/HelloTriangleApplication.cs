@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Silk.NET.Core.Native;
@@ -28,6 +27,8 @@ public unsafe class HelloTriangleApplication
 	private ExtDebugUtils? debugUtils;
 	private DebugUtilsMessengerEXT debugMessenger;
 
+	private PhysicalDevice? _physicalDevice;
+
 	public void Run()
 	{
 		InitWindow();
@@ -54,6 +55,7 @@ public unsafe class HelloTriangleApplication
 	private void InitVulkan() {
 		CreateInstance();
 		SetupDebugMessenger();
+		PickPhysicalDevice();
 	}
 
 	private void CreateInstance() {
@@ -140,7 +142,7 @@ public unsafe class HelloTriangleApplication
 		}
 	}
 
-	private void PopulateDebugMessengerCreateInfo(ref DebugUtilsMessengerCreateInfoEXT createInfo) {
+	private static void PopulateDebugMessengerCreateInfo(ref DebugUtilsMessengerCreateInfoEXT createInfo) {
 		createInfo.SType = StructureType.DebugUtilsMessengerCreateInfoExt;
 		createInfo.MessageSeverity = DebugUtilsMessageSeverityFlagsEXT.ErrorBitExt
 		                             | DebugUtilsMessageSeverityFlagsEXT.WarningBitExt;
@@ -148,6 +150,48 @@ public unsafe class HelloTriangleApplication
 		                         | DebugUtilsMessageTypeFlagsEXT.PerformanceBitExt
 		                         | DebugUtilsMessageTypeFlagsEXT.ValidationBitExt;
 		createInfo.PfnUserCallback = (DebugUtilsMessengerCallbackFunctionEXT)DebugCallback;
+	}
+
+	private void PickPhysicalDevice() {
+		var physicalDeviceCount = 0u;
+		vk!.EnumeratePhysicalDevices(instance, ref physicalDeviceCount, null);
+
+		if (physicalDeviceCount == 0) throw new Exception("Found 0 devices with Vulkan support");
+		
+		var devices = new PhysicalDevice[physicalDeviceCount];
+		fixed (PhysicalDevice* devicesPtr = devices)
+		{
+			vk!.EnumeratePhysicalDevices(instance, ref physicalDeviceCount, devicesPtr);
+		}
+
+		_physicalDevice = devices.First(IsDeviceSuitable);
+	}
+
+	private bool IsDeviceSuitable(PhysicalDevice device) {
+		var indices = FindQueueFamilies(device);
+		return indices.IsComplete();
+	}
+
+	private QueueFamilyIndices FindQueueFamilies(PhysicalDevice device) {
+		uint queueFamilyCount = 0;
+		vk!.GetPhysicalDeviceQueueFamilyProperties(device, ref queueFamilyCount, null);
+
+		var properties = new QueueFamilyProperties[queueFamilyCount];
+		fixed (QueueFamilyProperties* propertiesPointer = properties) {
+			vk.GetPhysicalDeviceQueueFamilyProperties(device, ref queueFamilyCount, propertiesPointer);
+		}
+
+		var queueFamilyIndices = new QueueFamilyIndices();
+		for (uint i = 0; i < properties.Length; i++) {
+			var property = properties[i];
+			if (property.QueueFlags.HasFlag(QueueFlags.GraphicsBit)) {
+				queueFamilyIndices.GraphicsFamily = i;
+			}
+			
+			if (queueFamilyIndices.IsComplete()) break;
+		}
+		
+		return queueFamilyIndices;
 	}
 
 	private void MainLoop() {
@@ -172,13 +216,15 @@ public unsafe class HelloTriangleApplication
 			DebugUtilsMessageSeverityFlagsEXT.ErrorBitExt => "Error",
 			DebugUtilsMessageSeverityFlagsEXT.WarningBitExt => "Warning",
 			DebugUtilsMessageSeverityFlagsEXT.InfoBitExt => "Info",
-			DebugUtilsMessageSeverityFlagsEXT.VerboseBitExt => "Verbose"
+			DebugUtilsMessageSeverityFlagsEXT.VerboseBitExt => "Verbose",
+			_ => throw new ArgumentOutOfRangeException(nameof(messageSeverity), messageSeverity, null)
 		};
 		var type = messageTypes switch {
 			DebugUtilsMessageTypeFlagsEXT.None => "None",
 			DebugUtilsMessageTypeFlagsEXT.GeneralBitExt => "General",
 			DebugUtilsMessageTypeFlagsEXT.PerformanceBitExt => "Performance",
-			DebugUtilsMessageTypeFlagsEXT.ValidationBitExt => "Validation"
+			DebugUtilsMessageTypeFlagsEXT.ValidationBitExt => "Validation",
+			_ => throw new ArgumentOutOfRangeException(nameof(messageTypes), messageTypes, null)
 		};
 		Console.WriteLine($"Vulkan {severity} {type}: " + Marshal.PtrToStringAnsi((nint)pCallbackData->PMessage));
 		return Vk.False;
