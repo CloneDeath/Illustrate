@@ -1,10 +1,12 @@
 using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Silk.NET.Core.Native;
 using Silk.NET.Maths;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.EXT;
+using Silk.NET.Vulkan.Extensions.KHR;
 using Silk.NET.Windowing;
 
 namespace SilkTutorial; 
@@ -27,9 +29,13 @@ public unsafe class HelloTriangleApplication
 	private ExtDebugUtils? debugUtils;
 	private DebugUtilsMessengerEXT debugMessenger;
 
-	private PhysicalDevice? _physicalDevice;
-	private Device? _device;
-	private Queue? _graphicsQueue;
+	private KhrSurface? _khrSurface;
+	private SurfaceKHR _surface;
+
+	private PhysicalDevice _physicalDevice;
+	private Device _device;
+	private Queue _graphicsQueue;
+	private Queue _presentQueue;
 
 	public void Run()
 	{
@@ -57,6 +63,7 @@ public unsafe class HelloTriangleApplication
 	private void InitVulkan() {
 		CreateInstance();
 		SetupDebugMessenger();
+		CreateSurface();
 		PickPhysicalDevice();
 		CreateLogicalDevice();
 	}
@@ -155,6 +162,14 @@ public unsafe class HelloTriangleApplication
 		createInfo.PfnUserCallback = (DebugUtilsMessengerCallbackFunctionEXT)DebugCallback;
 	}
 
+	private void CreateSurface() {
+		if (!vk!.TryGetInstanceExtension(instance, out _khrSurface)) {
+			throw new NotSupportedException("Could not create a KHR Surface");
+		}
+		
+		_surface = window!.VkSurface!.Create<AllocationCallbacks>(instance.ToHandle(), null).ToSurface();
+	}
+
 	private void PickPhysicalDevice() {
 		var physicalDeviceCount = 0u;
 		vk!.EnumeratePhysicalDevices(instance, ref physicalDeviceCount, null);
@@ -190,6 +205,11 @@ public unsafe class HelloTriangleApplication
 			if (property.QueueFlags.HasFlag(QueueFlags.GraphicsBit)) {
 				queueFamilyIndices.GraphicsFamily = i;
 			}
+
+			_khrSurface!.GetPhysicalDeviceSurfaceSupport(device, i, _surface, out var supported);
+			if (supported) {
+				queueFamilyIndices.PresentFamily = i;
+			}
 			
 			if (queueFamilyIndices.IsComplete()) break;
 		}
@@ -198,34 +218,43 @@ public unsafe class HelloTriangleApplication
 	}
 
 	public void CreateLogicalDevice() {
-		var indices = FindQueueFamilies(_physicalDevice!.Value);
+		var indices = FindQueueFamilies(_physicalDevice);
 
-		var priority = 1.0f;
-		var createInfo = new DeviceQueueCreateInfo {
-			SType = StructureType.DeviceQueueCreateInfo,
-			QueueFamilyIndex = indices.GraphicsFamily!.Value,
-			QueueCount = 1,
-			PQueuePriorities = &priority
-		};
-		var features = new PhysicalDeviceFeatures{};
+		var uniqueQueueFamilies = new[] { indices.GraphicsFamily!.Value, indices.PresentFamily!.Value };
+		uniqueQueueFamilies = uniqueQueueFamilies.Distinct().ToArray();
 
+		using var mem = GlobalMemory.Allocate(uniqueQueueFamilies.Length * sizeof(DeviceQueueCreateInfo));
+		var queueCreateInfos = (DeviceQueueCreateInfo*)Unsafe.AsPointer(ref mem.GetPinnableReference());
+
+		var queuePriority = 1.0f;
+		for (var i = 0; i < uniqueQueueFamilies.Length; i++) {
+			queueCreateInfos[i] = new DeviceQueueCreateInfo
+			{
+				SType = StructureType.DeviceQueueCreateInfo,
+				QueueFamilyIndex = uniqueQueueFamilies[i],
+				QueueCount = 1,
+				PQueuePriorities = &queuePriority
+			};
+		}
+
+		var features = new PhysicalDeviceFeatures();
+		
 		var deviceCreateInfo = new DeviceCreateInfo {
 			SType = StructureType.DeviceCreateInfo,
-			PQueueCreateInfos = &createInfo,
-			QueueCreateInfoCount = 1,
+			PQueueCreateInfos = queueCreateInfos,
+			QueueCreateInfoCount = (uint)uniqueQueueFamilies.Length,
 			PEnabledFeatures = &features,
 			EnabledExtensionCount = 0,
 			EnabledLayerCount = (uint)ValidationLayers.Length,
 			PpEnabledLayerNames = (byte**)SilkMarshal.StringArrayToPtr(ValidationLayers)
 		};
 
-		if (vk!.CreateDevice(_physicalDevice!.Value, deviceCreateInfo, null, out var device) != Result.Success) {
+		if (vk!.CreateDevice(_physicalDevice, deviceCreateInfo, null, out _device) != Result.Success) {
 			throw new Exception("Failed to create device");
 		}
-		_device = device;
 
-		vk!.GetDeviceQueue(device, indices.GraphicsFamily.Value, 0, out var queue);
-		_graphicsQueue = queue;
+		vk!.GetDeviceQueue(_device, indices.GraphicsFamily.Value, 0, out _graphicsQueue);
+		vk!.GetDeviceQueue(_device, indices.PresentFamily.Value, 0, out _presentQueue);
 
 		SilkMarshal.Free((nint)deviceCreateInfo.PpEnabledLayerNames);
 	}
@@ -235,10 +264,12 @@ public unsafe class HelloTriangleApplication
 	}
 
 	private void CleanUp() {
-		vk!.DestroyDevice(_device!.Value, null);
+		vk!.DestroyDevice(_device, null);
 		if (EnableValidationLayers) {
 			debugUtils!.DestroyDebugUtilsMessenger(instance, debugMessenger, null);
 		}
+
+		_khrSurface!.DestroySurface(instance, _surface, null);
 		vk!.DestroyInstance(instance, null);
 		vk!.Dispose();
 		window?.Dispose();
