@@ -28,6 +28,8 @@ public unsafe class HelloTriangleApplication
 	private DebugUtilsMessengerEXT debugMessenger;
 
 	private PhysicalDevice? _physicalDevice;
+	private Device? _device;
+	private Queue? _graphicsQueue;
 
 	public void Run()
 	{
@@ -56,6 +58,7 @@ public unsafe class HelloTriangleApplication
 		CreateInstance();
 		SetupDebugMessenger();
 		PickPhysicalDevice();
+		CreateLogicalDevice();
 	}
 
 	private void CreateInstance() {
@@ -194,11 +197,45 @@ public unsafe class HelloTriangleApplication
 		return queueFamilyIndices;
 	}
 
+	public void CreateLogicalDevice() {
+		var indices = FindQueueFamilies(_physicalDevice!.Value);
+
+		var priority = 1.0f;
+		var createInfo = new DeviceQueueCreateInfo {
+			SType = StructureType.DeviceQueueCreateInfo,
+			QueueFamilyIndex = indices.GraphicsFamily!.Value,
+			QueueCount = 1,
+			PQueuePriorities = &priority
+		};
+		var features = new PhysicalDeviceFeatures{};
+
+		var deviceCreateInfo = new DeviceCreateInfo {
+			SType = StructureType.DeviceCreateInfo,
+			PQueueCreateInfos = &createInfo,
+			QueueCreateInfoCount = 1,
+			PEnabledFeatures = &features,
+			EnabledExtensionCount = 0,
+			EnabledLayerCount = (uint)ValidationLayers.Length,
+			PpEnabledLayerNames = (byte**)SilkMarshal.StringArrayToPtr(ValidationLayers)
+		};
+
+		if (vk!.CreateDevice(_physicalDevice!.Value, deviceCreateInfo, null, out var device) != Result.Success) {
+			throw new Exception("Failed to create device");
+		}
+		_device = device;
+
+		vk!.GetDeviceQueue(device, indices.GraphicsFamily.Value, 0, out var queue);
+		_graphicsQueue = queue;
+
+		SilkMarshal.Free((nint)deviceCreateInfo.PpEnabledLayerNames);
+	}
+
 	private void MainLoop() {
 		window!.Run();
 	}
 
 	private void CleanUp() {
+		vk!.DestroyDevice(_device!.Value, null);
 		if (EnableValidationLayers) {
 			debugUtils!.DestroyDebugUtilsMessenger(instance, debugMessenger, null);
 		}
