@@ -252,7 +252,7 @@ namespace VulkanIn30Minutes
                 var commandBuffer = commandBuffers[i];
                 var frame = frames[i];
                 
-                device.UpdateDescriptorSets(1, new WriteDescriptorSet
+                device.UpdateDescriptorSets(new[]{new WriteDescriptorSet
                 {
                     DescriptorType = DescriptorType.CombinedImageSampler,
                     ImageInfo = new[] {
@@ -263,7 +263,7 @@ namespace VulkanIn30Minutes
                     },
                     DstSet = descSets[i],
                     DescriptorCount = 1
-                }, 0, new CopyDescriptorSet());
+                }},new[]{new CopyDescriptorSet()});
 
                 commandBuffer.Begin(new CommandBufferBeginInfo());
                 commandBuffer.CmdBeginRenderPass(new RenderPassBeginInfo
@@ -280,7 +280,7 @@ namespace VulkanIn30Minutes
                     }
                 }, SubpassContents.Inline);
                 commandBuffer.CmdBindPipeline(PipelineBindPoint.Graphics, pipeline);
-                commandBuffer.CmdBindDescriptorSets(PipelineBindPoint.Graphics, pipelineLayout, 0, 1, descSets[i], 0, 0);
+                commandBuffer.CmdBindDescriptorSets(PipelineBindPoint.Graphics, pipelineLayout, (uint)i, 1, descSets, 0, 0);
                 commandBuffer.CmdSetViewport(0, 1, new Viewport
                 {
                     X = 0,
@@ -303,7 +303,7 @@ namespace VulkanIn30Minutes
             
             while (!Console.KeyAvailable) {
                 var currentSwapImage = device.AcquireNextImageKHR(swapchain, long.MaxValue, semaphorePresentComplete, new Fence() { _handle = 0 });
-                queue.Submit(1, new SubmitInfo {
+                queue.Submit(new[]{new SubmitInfo {
                     CommandBuffers = new[] { commandBuffers[currentSwapImage] },
                     WaitSemaphores = new [] {
                         semaphorePresentComplete
@@ -311,7 +311,7 @@ namespace VulkanIn30Minutes
                     WaitDstStageMask = new[] {
                         PipelineStageFlags.AllGraphics
                     }
-                }, fence);
+                }}, fence);
                 queue.PresentKHR(new PresentInfoKhr
                 {
                     Swapchains = new[] {

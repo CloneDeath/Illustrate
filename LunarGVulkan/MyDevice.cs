@@ -34,6 +34,7 @@ namespace LunarGVulkan
 				ImageFormat = surfaceFormat.Format != Format.Undefined ? surfaceFormat.Format : Format.B8G8R8A8Unorm,
 
 			});
+			return null;
 		}
 	}
 

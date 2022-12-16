@@ -1,17 +1,17 @@
-﻿using Illustrate.Vulkan.SpirV;
-using Illustrate.Vulkan.SpirV.Instructions.Annotation;
-using Illustrate.Vulkan.SpirV.Instructions.ConstantCreation;
-using Illustrate.Vulkan.SpirV.Instructions.ControlFlow;
-using Illustrate.Vulkan.SpirV.Instructions.Debug;
-using Illustrate.Vulkan.SpirV.Instructions.Extension;
-using Illustrate.Vulkan.SpirV.Instructions.Function;
-using Illustrate.Vulkan.SpirV.Instructions.Memory;
-using Illustrate.Vulkan.SpirV.Instructions.ModeSetting;
-using Illustrate.Vulkan.SpirV.Instructions.TypeDeclaration;
-using Illustrate.Vulkan.SpirV.Native;
-using Capability = Illustrate.Vulkan.SpirV.Instructions.ModeSetting.Capability;
-using ExecutionMode = Illustrate.Vulkan.SpirV.Instructions.ModeSetting.ExecutionMode;
-using MemoryModel = Illustrate.Vulkan.SpirV.Instructions.ModeSetting.MemoryModel;
+﻿using SpirV;
+using SpirV.Instructions.Annotation;
+using SpirV.Instructions.ConstantCreation;
+using SpirV.Instructions.ControlFlow;
+using SpirV.Instructions.Debug;
+using SpirV.Instructions.Extension;
+using SpirV.Instructions.Function;
+using SpirV.Instructions.Memory;
+using SpirV.Instructions.ModeSetting;
+using SpirV.Instructions.TypeDeclaration;
+using SpirV.Native;
+using Capability = SpirV.Instructions.ModeSetting.Capability;
+using ExecutionMode = SpirV.Instructions.ModeSetting.ExecutionMode;
+using MemoryModel = SpirV.Instructions.ModeSetting.MemoryModel;
 
 namespace VulkanIn30Minutes
 {
@@ -24,9 +24,9 @@ namespace VulkanIn30Minutes
                 Instructions = new ISpirVInstruction[] {
                     Capability.Shader,
                     new ExtInstImport(1, "GLSL.std.450"),
-                    new MemoryModel(AddressingModel.Logical, Illustrate.Vulkan.SpirV.Native.MemoryModel.GLSL450),
+                    new MemoryModel(AddressingModel.Logical, SpirV.Native.MemoryModel.GLSL450),
                     new EntryPoint(ExecutionModel.Fragment, 4, "main", 9, 17),
-                    new ExecutionMode(4, Illustrate.Vulkan.SpirV.Native.ExecutionMode.OriginUpperLeft),
+                    new ExecutionMode(4, SpirV.Native.ExecutionMode.OriginUpperLeft),
                     new Source(SourceLanguage.GLSL, 400),
                     new SourceExtension("GL_ARB_separate_shader_objects"),
                     new SourceExtension("GL_ARB_shading_language_420pack"),

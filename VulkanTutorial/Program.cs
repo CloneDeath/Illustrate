@@ -44,7 +44,7 @@ namespace VulkanTutorial
 
 			var swapChain = new SwapChain(instance, physicalDevice, device);
 			swapChain.Initialize(window);
-			swapChain.Create(null);
+			swapChain.Create(new CommandBuffer());
 			
 			instance.Destroy();
 

@@ -17,7 +17,7 @@ namespace VulkanTutorial
 
 		public Instance Instance { get; set; }
 
-		public int NodeIndex { get; set; }
+		public uint NodeIndex { get; set; }
 		public PhysicalDevice PhysicalDevice { get; set; }
 
 		public SurfaceKhr Surface { get; set; }

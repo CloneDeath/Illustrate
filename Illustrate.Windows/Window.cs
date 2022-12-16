@@ -1,6 +1,7 @@
-﻿using System.Drawing;
-using System.Runtime.InteropServices;
-using System.Windows.Forms;
+﻿using System.Runtime.InteropServices;
+using OpenTK.Mathematics;
+using OpenTK.Windowing.Common;
+using OpenTK.Windowing.Desktop;
 using VulkanSharp;
 using VulkanSharp.Windows;
 
@@ -9,23 +10,24 @@ namespace Illustrate.Windows
     public class Window : IWindow
     {
 	    private bool _fullscreen;
-	    private readonly Form _form;
+	    private readonly NativeWindow _form;
 
 	    public Window() {
-		    _form = new Form();
+		    _form = new NativeWindow(new NativeWindowSettings {
+			    
+		    });
 	    }
 
 	    public void Show() {
-		    _form.Show();
-		    _form.Activate();
+		    _form.IsVisible = true;
 	    }
 
 	    public void Hide() {
-		    _form.Hide();
+		    _form.IsVisible = false;
 	    }
 
 	    public bool FullScreen {
-		    get { return _fullscreen; }
+		    get => _fullscreen;
 		    set {
 			    if (value) {
 				    MakeFullScreen();
@@ -37,43 +39,44 @@ namespace Illustrate.Windows
 	    }
 
 	    public string Title {
-		    get { return _form.Text; }
-			set { _form.Text = value; }
+		    get => _form.Title;
+		    set => _form.Title = value;
 	    }
 
 	    public void HandleEvents() {
-		    Application.DoEvents();
+		    //Application.DoEvents();
 	    }
 
 	    public SurfaceKhr CreateSurface(Instance instance) {
 		    return instance.CreateWin32SurfaceKHR(new Win32SurfaceCreateInfoKhr {
-			    Hwnd = _form.Handle,
-			    Hinstance = Marshal.GetHINSTANCE(typeof(Form).Module)
+			    Hwnd = _form.Context.WindowPtr,
+			    Hinstance = Marshal.GetHINSTANCE(typeof(NativeWindow).Module)
 		    });
 	    }
 
 	    public Size BorderSize { get; } = new Size(16, 38);
 
 	    public Size Size {
-		    get { return _form.Size; }
+		    get => new(_form.Size.X, _form.Size.Y);
 		    set {
-				_form.FormBorderStyle = FormBorderStyle.Sizable;
-				_form.WindowState = FormWindowState.Normal;
-				_form.Size = value + BorderSize;
-			}
+			    _form.WindowBorder = WindowBorder.Resizable;
+			    _form.WindowState = WindowState.Normal;
+			    var windowSize = value + BorderSize;
+			    _form.Size = new Vector2i(windowSize.Width, windowSize.Height);
+		    }
 	    }
 
 	    protected virtual void MakeFullScreen() {
 			_fullscreen = true;
-			_form.FormBorderStyle = FormBorderStyle.None;
-			_form.WindowState = FormWindowState.Maximized;
-			_form.Bounds = Screen.PrimaryScreen.Bounds;
+			_form.WindowBorder = WindowBorder.Hidden;
+			_form.WindowState = WindowState.Maximized;
+			//_form.Bounds =  Screen.PrimaryScreen.Bounds;
 		}
 
 		protected virtual void MakeWindowed() {
 			_fullscreen = false;
-			_form.FormBorderStyle = FormBorderStyle.Sizable;
-			_form.WindowState = FormWindowState.Normal;
+			_form.WindowBorder = WindowBorder.Resizable;
+			_form.WindowState = WindowState.Normal;
 		}
 
     }

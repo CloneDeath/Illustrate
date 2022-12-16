@@ -26,7 +26,7 @@ namespace LunarGVulkan
 						}
 					},
 				}
-			}));
+			}), this);
 		}
 
 		public SurfaceFormatKhr[] GetSurfaceFormats(MySurface surface) {
