@@ -17,6 +17,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LunarGVulkan", "LunarGVulka
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpirV", "..\SpirV\SpirV\SpirV.csproj", "{0B743F23-BD0E-4883-BB0E-D2CDB7B4A4A8}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Silk", "Silk", "{2610B470-02B3-4B34-B27D-6D3AF8AA39E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SilkTutorial", "SilkTutorial\SilkTutorial.csproj", "{508730F8-5300-4E9F-A9E9-7B20F983A032}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,8 +55,15 @@ Global
 		{0B743F23-BD0E-4883-BB0E-D2CDB7B4A4A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0B743F23-BD0E-4883-BB0E-D2CDB7B4A4A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0B743F23-BD0E-4883-BB0E-D2CDB7B4A4A8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{508730F8-5300-4E9F-A9E9-7B20F983A032}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{508730F8-5300-4E9F-A9E9-7B20F983A032}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{508730F8-5300-4E9F-A9E9-7B20F983A032}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{508730F8-5300-4E9F-A9E9-7B20F983A032}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{508730F8-5300-4E9F-A9E9-7B20F983A032} = {2610B470-02B3-4B34-B27D-6D3AF8AA39E8}
 	EndGlobalSection
 EndGlobal
