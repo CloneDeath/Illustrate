@@ -80,6 +80,7 @@ public unsafe class HelloTriangleApplication
 		CreateLogicalDevice();
 		CreateSwapChain();
 		CreateImageViews();
+		CreateGraphicsPipeline();
 	}
 
 	private void CreateInstance() {
@@ -434,6 +435,10 @@ public unsafe class HelloTriangleApplication
 				throw new Exception("Failed to create an image view");
 			}
 		}
+	}
+
+	private void CreateGraphicsPipeline() {
+		
 	}
 
 	private void MainLoop() {
