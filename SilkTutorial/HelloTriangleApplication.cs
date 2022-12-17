@@ -50,6 +50,8 @@ public unsafe class HelloTriangleApplication
 
 	private ImageView[] swapchainImageViews = Array.Empty<ImageView>();
 
+	private PipelineLayout pipelineLayout;
+
 	public void Run()
 	{
 		InitWindow();
@@ -461,6 +463,67 @@ public unsafe class HelloTriangleApplication
 
 		var shaderStages = new[] { vertShaderStageInfo, fragShaderStageInfo };
 
+		var vertexInputStateCreateInfo = new PipelineVertexInputStateCreateInfo {
+			SType = StructureType.PipelineVertexInputStateCreateInfo,
+			VertexAttributeDescriptionCount = 0,
+			VertexBindingDescriptionCount = 0
+		};
+
+		var inputAssembly = new PipelineInputAssemblyStateCreateInfo {
+			SType = StructureType.PipelineInputAssemblyStateCreateInfo,
+			Topology = PrimitiveTopology.TriangleList,
+			PrimitiveRestartEnable = false
+		};
+
+		var viewport = new Viewport {
+			Height = swapchainExtent.Height,
+			Width = swapchainExtent.Width,
+			X = 0,
+			Y = 0,
+			MinDepth = 0,
+			MaxDepth = 1
+		};
+
+		var scissor = new Rect2D {
+			Offset = new Offset2D(0, 0),
+			Extent = swapchainExtent
+		};
+
+		var viewportState = new PipelineViewportStateCreateInfo {
+			SType = StructureType.PipelineViewportStateCreateInfo,
+			ScissorCount = 1,
+			PScissors = &scissor,
+			ViewportCount = 1,
+			PViewports = &viewport
+		};
+
+		var rasterizer = new PipelineRasterizationStateCreateInfo {
+			SType = StructureType.PipelineRasterizationStateCreateInfo,
+			DepthClampEnable = false,
+			RasterizerDiscardEnable = false,
+			PolygonMode = PolygonMode.Fill,
+			LineWidth = 1,
+			CullMode = CullModeFlags.BackBit,
+			FrontFace = FrontFace.Clockwise,
+			DepthBiasEnable = false
+		};
+
+		var colorBlendAttachment = new PipelineColorBlendAttachmentState {
+			ColorWriteMask = ColorComponentFlags.ABit 
+				| ColorComponentFlags.RBit
+				| ColorComponentFlags.GBit
+				| ColorComponentFlags.BBit,
+			BlendEnable = false
+		};
+
+		var pipelineLayoutInfo = new PipelineLayoutCreateInfo {
+			SType = StructureType.PipelineLayoutCreateInfo
+		};
+
+		if (vk!.CreatePipelineLayout(_device, pipelineLayoutInfo, null, out pipelineLayout) != Result.Success) {
+			throw new Exception("Failed to create pipeline layout");
+		}
+
 		SilkMarshal.Free((nint)vertShaderStageInfo.PName);
 		SilkMarshal.Free((nint)fragShaderStageInfo.PName);
 		vk!.DestroyShaderModule(_device, vertShaderModule, null);
@@ -486,6 +549,7 @@ public unsafe class HelloTriangleApplication
 	}
 
 	private void CleanUp() {
+		vk!.DestroyPipelineLayout(_device, pipelineLayout, null);
 		foreach (var imageView in swapchainImageViews) {
 			vk!.DestroyImageView(_device, imageView, null);
 		}
