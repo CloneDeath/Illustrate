@@ -43,9 +43,11 @@ public unsafe class HelloTriangleApplication
 
 	private KhrSwapchain? _khrSwapchain;
 	private SwapchainKHR swapchain;
-	private Image[] swapchainImages;
+	private Image[] swapchainImages = Array.Empty<Image>();
 	private Format swapchainFormat;
 	private Extent2D swapchainExtent;
+
+	private ImageView[] swapchainImageViews = Array.Empty<ImageView>();
 
 	public void Run()
 	{
@@ -77,6 +79,7 @@ public unsafe class HelloTriangleApplication
 		PickPhysicalDevice();
 		CreateLogicalDevice();
 		CreateSwapChain();
+		CreateImageViews();
 	}
 
 	private void CreateInstance() {
@@ -404,11 +407,43 @@ public unsafe class HelloTriangleApplication
 		return actualExtent;
 	}
 
+	private void CreateImageViews() {
+		swapchainImageViews = new ImageView[swapchainImages.Length];
+		for (var i = 0; i < swapchainImages.Length; i++) {
+			var imageViewCreateInfo = new ImageViewCreateInfo {
+				SType = StructureType.ImageViewCreateInfo,
+				Image = swapchainImages[i],
+				ViewType = ImageViewType.Type2D,
+				Format = swapchainFormat,
+				Components = new ComponentMapping {
+					A = ComponentSwizzle.Identity,
+					R = ComponentSwizzle.Identity,
+					G = ComponentSwizzle.Identity,
+					B = ComponentSwizzle.Identity
+				},
+				SubresourceRange = new ImageSubresourceRange {
+					AspectMask = ImageAspectFlags.ColorBit,
+					BaseMipLevel = 0,
+					LayerCount = 1,
+					LevelCount = 1,
+					BaseArrayLayer = 0
+				}
+			};
+
+			if (vk!.CreateImageView(_device, imageViewCreateInfo, null, out swapchainImageViews[i]) != Result.Success) {
+				throw new Exception("Failed to create an image view");
+			}
+		}
+	}
+
 	private void MainLoop() {
 		window!.Run();
 	}
 
 	private void CleanUp() {
+		foreach (var imageView in swapchainImageViews) {
+			vk!.DestroyImageView(_device, imageView, null);
+		}
 		_khrSwapchain!.DestroySwapchain(_device, swapchain, null);
 		vk!.DestroyDevice(_device, null);
 		if (EnableValidationLayers) {
