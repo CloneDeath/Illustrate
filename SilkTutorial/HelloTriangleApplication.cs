@@ -21,6 +21,10 @@ public unsafe class HelloTriangleApplication
 	};
 	public bool EnableValidationLayers = true;
 
+	private readonly string[] DeviceExtensions = new[] {
+		KhrSwapchain.ExtensionName
+	};
+
 	private IWindow? window;
 	private Vk? vk;
 
@@ -187,7 +191,21 @@ public unsafe class HelloTriangleApplication
 
 	private bool IsDeviceSuitable(PhysicalDevice device) {
 		var indices = FindQueueFamilies(device);
-		return indices.IsComplete();
+		var extensionsSupported = CheckDeviceExtensionSupport(device);
+		return indices.IsComplete() && extensionsSupported;
+	}
+
+	private bool CheckDeviceExtensionSupport(PhysicalDevice device) {
+		uint extensionCount = 0;
+		vk!.EnumerateDeviceExtensionProperties(device, (byte*)null, ref extensionCount, null);
+
+		var properties = new ExtensionProperties[extensionCount];
+		fixed (ExtensionProperties* propertiesPointer = properties) {
+			vk!.EnumerateDeviceExtensionProperties(device, (byte*)null, ref extensionCount, propertiesPointer);
+		}
+
+		var propertyNames = properties.Select(p => SilkMarshal.PtrToString((nint)p.ExtensionName)).ToList();
+		return DeviceExtensions.All(propertyNames.Contains);
 	}
 
 	private QueueFamilyIndices FindQueueFamilies(PhysicalDevice device) {
@@ -244,7 +262,8 @@ public unsafe class HelloTriangleApplication
 			PQueueCreateInfos = queueCreateInfos,
 			QueueCreateInfoCount = (uint)uniqueQueueFamilies.Length,
 			PEnabledFeatures = &features,
-			EnabledExtensionCount = 0,
+			PpEnabledExtensionNames = (byte**)SilkMarshal.StringArrayToPtr(DeviceExtensions),
+			EnabledExtensionCount = (uint)DeviceExtensions.Length,
 			EnabledLayerCount = (uint)ValidationLayers.Length,
 			PpEnabledLayerNames = (byte**)SilkMarshal.StringArrayToPtr(ValidationLayers)
 		};
