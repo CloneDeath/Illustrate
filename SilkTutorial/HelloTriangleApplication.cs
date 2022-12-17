@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -438,7 +439,46 @@ public unsafe class HelloTriangleApplication
 	}
 
 	private void CreateGraphicsPipeline() {
-		
+		var vertShaderCode = File.ReadAllBytes("shaders/vert.spv");
+		var fragShaderCode = File.ReadAllBytes("shaders/frag.spv");
+
+		var vertShaderModule = CreateShaderModule(vertShaderCode);
+		var fragShaderModule = CreateShaderModule(fragShaderCode);
+
+		var vertShaderStageInfo = new PipelineShaderStageCreateInfo {
+			SType = StructureType.PipelineShaderStageCreateInfo,
+			Stage = ShaderStageFlags.VertexBit,
+			Module = vertShaderModule,
+			PName = (byte*)SilkMarshal.StringToPtr("main")
+		};
+
+		var fragShaderStageInfo = new PipelineShaderStageCreateInfo {
+			SType = StructureType.PipelineShaderStageCreateInfo,
+			Stage = ShaderStageFlags.FragmentBit,
+			Module = fragShaderModule,
+			PName = (byte*)SilkMarshal.StringToPtr("main")
+		};
+
+		var shaderStages = new[] { vertShaderStageInfo, fragShaderStageInfo };
+
+		SilkMarshal.Free((nint)vertShaderStageInfo.PName);
+		SilkMarshal.Free((nint)fragShaderStageInfo.PName);
+		vk!.DestroyShaderModule(_device, vertShaderModule, null);
+		vk!.DestroyShaderModule(_device, fragShaderModule, null);
+	}
+
+	private ShaderModule CreateShaderModule(byte[] code) {
+		fixed (byte* codePointer = code) {
+			var createInfo = new ShaderModuleCreateInfo {
+				SType = StructureType.ShaderModuleCreateInfo,
+				CodeSize = (uint)code.Length,
+				PCode = (uint*)codePointer
+			};
+			if (vk!.CreateShaderModule(_device, createInfo, null, out var shaderModule) != Result.Success) {
+				throw new Exception("Could not create a shader module");
+			}
+			return shaderModule;
+		}
 	}
 
 	private void MainLoop() {
