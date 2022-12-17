@@ -41,6 +41,12 @@ public unsafe class HelloTriangleApplication
 	private Queue _graphicsQueue;
 	private Queue _presentQueue;
 
+	private KhrSwapchain? _khrSwapchain;
+	private SwapchainKHR swapchain;
+	private Image[] swapchainImages;
+	private Format swapchainFormat;
+	private Extent2D swapchainExtent;
+
 	public void Run()
 	{
 		InitWindow();
@@ -70,6 +76,7 @@ public unsafe class HelloTriangleApplication
 		CreateSurface();
 		PickPhysicalDevice();
 		CreateLogicalDevice();
+		CreateSwapChain();
 	}
 
 	private void CreateInstance() {
@@ -192,7 +199,14 @@ public unsafe class HelloTriangleApplication
 	private bool IsDeviceSuitable(PhysicalDevice device) {
 		var indices = FindQueueFamilies(device);
 		var extensionsSupported = CheckDeviceExtensionSupport(device);
-		return indices.IsComplete() && extensionsSupported;
+
+		var swapChainAdequate = false;
+		if (extensionsSupported) {
+			var swapChainSupport = QuerySwapChainSupport(device);
+			swapChainAdequate = swapChainSupport.Formats.Any() && swapChainSupport.PresentModes.Any();
+		}
+		
+		return indices.IsComplete() && extensionsSupported && swapChainAdequate;
 	}
 
 	private bool CheckDeviceExtensionSupport(PhysicalDevice device) {
@@ -233,6 +247,28 @@ public unsafe class HelloTriangleApplication
 		}
 		
 		return queueFamilyIndices;
+	}
+
+	public SwapChainSupportDetails QuerySwapChainSupport(PhysicalDevice physicalDevice) {
+		var details = new SwapChainSupportDetails();
+
+		_khrSurface!.GetPhysicalDeviceSurfaceCapabilities(physicalDevice, _surface, out details.Capabilities);
+
+		uint formatCount = 0;
+		_khrSurface!.GetPhysicalDeviceSurfaceFormats(physicalDevice, _surface, ref formatCount, null);
+		details.Formats = new SurfaceFormatKHR[formatCount];
+		fixed (SurfaceFormatKHR* formatsPointer = details.Formats) {
+			_khrSurface!.GetPhysicalDeviceSurfaceFormats(physicalDevice, _surface, ref formatCount, formatsPointer);
+		}
+		
+		uint presentModesCount = 0;
+		_khrSurface!.GetPhysicalDeviceSurfacePresentModes(physicalDevice, _surface, ref presentModesCount, null);
+		details.PresentModes = new PresentModeKHR[presentModesCount];
+		fixed (PresentModeKHR* presentModesPointer = details.PresentModes) {
+			_khrSurface!.GetPhysicalDeviceSurfacePresentModes(physicalDevice, _surface, ref presentModesCount, presentModesPointer);
+		}
+
+		return details;
 	}
 
 	public void CreateLogicalDevice() {
@@ -278,11 +314,102 @@ public unsafe class HelloTriangleApplication
 		SilkMarshal.Free((nint)deviceCreateInfo.PpEnabledLayerNames);
 	}
 
+	private void CreateSwapChain() {
+		var support = QuerySwapChainSupport(_physicalDevice);
+		var surfaceFormat = ChooseSwapSurfaceFormat(support.Formats);
+		var presentMode = ChooseSwapPresentMode(support.PresentModes);
+		var extent = ChooseSwapExtent(support.Capabilities);
+		var imageCount = support.Capabilities.MinImageCount + 1;
+		if (support.Capabilities.MaxImageCount != 0 && imageCount > support.Capabilities.MaxImageCount) {
+			imageCount = support.Capabilities.MaxImageCount;
+		}
+
+		var swapchainCreateInfo = new SwapchainCreateInfoKHR {
+			SType = StructureType.SwapchainCreateInfoKhr,
+			Surface = _surface,
+			MinImageCount = imageCount,
+			ImageExtent = extent,
+			ImageFormat = surfaceFormat.Format,
+			ImageColorSpace = surfaceFormat.ColorSpace,
+			PresentMode = presentMode,
+			ImageArrayLayers = 1,
+			ImageUsage = ImageUsageFlags.ColorAttachmentBit,
+			PreTransform = support.Capabilities.CurrentTransform,
+			CompositeAlpha = CompositeAlphaFlagsKHR.OpaqueBitKhr,
+			Clipped = true,
+			OldSwapchain = default
+		};
+
+		var indices = FindQueueFamilies(_physicalDevice);
+		var queueFamilyIndices = stackalloc [] { indices.GraphicsFamily!.Value, indices.PresentFamily!.Value };
+		if (indices.GraphicsFamily != indices.PresentFamily) {
+			swapchainCreateInfo.ImageSharingMode = SharingMode.Concurrent;
+			swapchainCreateInfo.QueueFamilyIndexCount = 2;
+			swapchainCreateInfo.PQueueFamilyIndices = queueFamilyIndices;
+		}
+		else {
+			swapchainCreateInfo.ImageSharingMode = SharingMode.Exclusive;
+			swapchainCreateInfo.QueueFamilyIndexCount = 0;
+			swapchainCreateInfo.PQueueFamilyIndices = null;
+		}
+		
+		if (!vk!.TryGetDeviceExtension(instance, _device, out _khrSwapchain))
+		{
+			throw new NotSupportedException("VK_KHR_swapchain extension not found.");
+		}
+
+		if (_khrSwapchain!.CreateSwapchain(_device, swapchainCreateInfo, null, out swapchain) != Result.Success) {
+			throw new Exception("Failed to create swapchain");
+		}
+
+		swapchainImages = Helpers.GetArray((ref uint length, Image* data) =>
+			_khrSwapchain.GetSwapchainImages(_device, swapchain, ref length, data));
+
+		swapchainFormat = surfaceFormat.Format;
+		swapchainExtent = extent;
+	}
+	
+	private SurfaceFormatKHR ChooseSwapSurfaceFormat(SurfaceFormatKHR[] availableFormats) {
+		foreach (var surfaceFormat in availableFormats) {
+			if (surfaceFormat is { Format: Format.B8G8R8A8Srgb, ColorSpace: ColorSpaceKHR.SpaceSrgbNonlinearKhr }) {
+				return surfaceFormat;
+			}
+		}
+		return availableFormats.First();
+	}
+
+	private PresentModeKHR ChooseSwapPresentMode(PresentModeKHR[] availableModes) {
+		foreach (var presentMode in availableModes) {
+			if (presentMode == PresentModeKHR.MailboxKhr) return presentMode;
+		}
+
+		return PresentModeKHR.FifoKhr;
+	}
+
+	private Extent2D ChooseSwapExtent(SurfaceCapabilitiesKHR capabilities) {
+		if (capabilities.CurrentExtent.Width != uint.MaxValue) {
+			return capabilities.CurrentExtent;
+		}
+
+		var framebufferSize = window!.FramebufferSize;
+
+		Extent2D actualExtent = new () {
+			Width = (uint)framebufferSize.X,
+			Height = (uint)framebufferSize.Y
+		};
+
+		actualExtent.Width = Math.Clamp(actualExtent.Width, capabilities.MinImageExtent.Width, capabilities.MaxImageExtent.Width);
+		actualExtent.Height = Math.Clamp(actualExtent.Height, capabilities.MinImageExtent.Height, capabilities.MaxImageExtent.Height);
+
+		return actualExtent;
+	}
+
 	private void MainLoop() {
 		window!.Run();
 	}
 
 	private void CleanUp() {
+		_khrSwapchain!.DestroySwapchain(_device, swapchain, null);
 		vk!.DestroyDevice(_device, null);
 		if (EnableValidationLayers) {
 			debugUtils!.DestroyDebugUtilsMessenger(instance, debugMessenger, null);
