@@ -50,6 +50,7 @@ public unsafe class HelloTriangleApplication
 
 	private ImageView[] swapchainImageViews = Array.Empty<ImageView>();
 
+	private RenderPass renderPass;
 	private PipelineLayout pipelineLayout;
 
 	public void Run()
@@ -83,6 +84,7 @@ public unsafe class HelloTriangleApplication
 		CreateLogicalDevice();
 		CreateSwapChain();
 		CreateImageViews();
+		CreateRenderPass();
 		CreateGraphicsPipeline();
 	}
 
@@ -440,6 +442,42 @@ public unsafe class HelloTriangleApplication
 		}
 	}
 
+	private void CreateRenderPass() {
+		var colorAttachment = new AttachmentDescription {
+			Format = swapchainFormat,
+			Samples = SampleCountFlags.Count1Bit,
+			LoadOp = AttachmentLoadOp.Clear,
+			StoreOp = AttachmentStoreOp.Store,
+			StencilLoadOp = AttachmentLoadOp.DontCare,
+			StencilStoreOp = AttachmentStoreOp.DontCare,
+			InitialLayout = ImageLayout.Undefined,
+			FinalLayout = ImageLayout.PresentSrcKhr
+		};
+
+		var colorAttachmentRef = new AttachmentReference {
+			Attachment = 0,
+			Layout = ImageLayout.ColorAttachmentOptimal
+		};
+		
+		var subpass = new SubpassDescription {
+			PipelineBindPoint = PipelineBindPoint.Graphics,
+			ColorAttachmentCount = 1,
+			PColorAttachments = &colorAttachmentRef
+		};
+		
+		var createInfo = new RenderPassCreateInfo {
+			SType	= StructureType.RenderPassCreateInfo,
+			AttachmentCount = 1,
+			PAttachments = &colorAttachment,
+			SubpassCount = 1,
+			PSubpasses = &subpass
+		};
+
+		if (vk!.CreateRenderPass(_device, createInfo, null, out renderPass) != Result.Success) {
+			throw new Exception("Could not create the render pass");
+		}
+	}
+
 	private void CreateGraphicsPipeline() {
 		var vertShaderCode = File.ReadAllBytes("shaders/vert.spv");
 		var fragShaderCode = File.ReadAllBytes("shaders/frag.spv");
@@ -550,6 +588,7 @@ public unsafe class HelloTriangleApplication
 
 	private void CleanUp() {
 		vk!.DestroyPipelineLayout(_device, pipelineLayout, null);
+		vk!.DestroyRenderPass(_device, renderPass, null);
 		foreach (var imageView in swapchainImageViews) {
 			vk!.DestroyImageView(_device, imageView, null);
 		}
