@@ -601,6 +601,12 @@ public unsafe class HelloTriangleApplication
 			throw new Exception("Failed to create pipeline layout");
 		}
 
+		var dynamicStates = stackalloc[] { DynamicState.Viewport, DynamicState.Scissor };
+		var pipelineDynamicStateInfo = new PipelineDynamicStateCreateInfo {
+			SType = StructureType.PipelineDynamicStateCreateInfo,
+			DynamicStateCount = 2,
+			PDynamicStates = dynamicStates
+		};
 		fixed (PipelineShaderStageCreateInfo* shaderStagesPointer = shaderStages) {
 			var pipelineInfo = new GraphicsPipelineCreateInfo {
 				SType = StructureType.GraphicsPipelineCreateInfo,
@@ -615,7 +621,8 @@ public unsafe class HelloTriangleApplication
 				PColorBlendState = &colorBlending,
 				Layout = pipelineLayout,
 				RenderPass = renderPass,
-				Subpass = 0
+				Subpass = 0,
+				PDynamicState = &pipelineDynamicStateInfo
 			};
 
 			if (vk!.CreateGraphicsPipelines(_device, default, 1, &pipelineInfo, null, out graphicsPipeline) != Result.Success) {
