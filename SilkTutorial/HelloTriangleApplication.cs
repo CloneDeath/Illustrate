@@ -52,6 +52,7 @@ public unsafe class HelloTriangleApplication
 
 	private RenderPass renderPass;
 	private PipelineLayout pipelineLayout;
+	private Pipeline graphicsPipeline;
 
 	public void Run()
 	{
@@ -553,6 +554,20 @@ public unsafe class HelloTriangleApplication
 				| ColorComponentFlags.BBit,
 			BlendEnable = false
 		};
+		
+		var colorBlending = new PipelineColorBlendStateCreateInfo {
+			SType = StructureType.PipelineColorBlendStateCreateInfo,
+			LogicOpEnable = false,
+			LogicOp = LogicOp.Copy,
+			AttachmentCount = 1,
+			PAttachments = &colorBlendAttachment,
+		};
+
+		var sampler = new PipelineMultisampleStateCreateInfo {
+			SType = StructureType.PipelineMultisampleStateCreateInfo,
+			RasterizationSamples = SampleCountFlags.Count1Bit,
+			SampleShadingEnable = false
+		};
 
 		var pipelineLayoutInfo = new PipelineLayoutCreateInfo {
 			SType = StructureType.PipelineLayoutCreateInfo
@@ -560,6 +575,28 @@ public unsafe class HelloTriangleApplication
 
 		if (vk!.CreatePipelineLayout(_device, pipelineLayoutInfo, null, out pipelineLayout) != Result.Success) {
 			throw new Exception("Failed to create pipeline layout");
+		}
+
+		fixed (PipelineShaderStageCreateInfo* shaderStagesPointer = shaderStages) {
+			var pipelineInfo = new GraphicsPipelineCreateInfo {
+				SType = StructureType.GraphicsPipelineCreateInfo,
+				StageCount = 2,
+				PStages = shaderStagesPointer,
+				PVertexInputState = &vertexInputStateCreateInfo,
+				PInputAssemblyState = &inputAssembly,
+				PViewportState = &viewportState,
+				PRasterizationState = &rasterizer,
+				PMultisampleState = &sampler,
+				PDepthStencilState = null,
+				PColorBlendState = &colorBlending,
+				Layout = pipelineLayout,
+				RenderPass = renderPass,
+				Subpass = 0
+			};
+
+			if (vk!.CreateGraphicsPipelines(_device, default, 1, &pipelineInfo, null, out graphicsPipeline) != Result.Success) {
+				throw new Exception("Failed to create graphics pipelines");
+			}
 		}
 
 		SilkMarshal.Free((nint)vertShaderStageInfo.PName);
@@ -587,6 +624,7 @@ public unsafe class HelloTriangleApplication
 	}
 
 	private void CleanUp() {
+		vk!.DestroyPipeline(_device, graphicsPipeline, null);
 		vk!.DestroyPipelineLayout(_device, pipelineLayout, null);
 		vk!.DestroyRenderPass(_device, renderPass, null);
 		foreach (var imageView in swapchainImageViews) {
