@@ -63,6 +63,12 @@ public unsafe class HelloTriangleApplication
 
 	private bool framebufferResized;
 
+	private readonly Vertex[] vertices = {
+		new() { Position = new Vector2D<float>(0, -0.5f), Color = new Vector3D<float>(1, 0, 0) },
+		new() { Position = new Vector2D<float>(0.5f, 0.5f), Color = new Vector3D<float>(0, 1, 0) },
+		new() { Position = new Vector2D<float>(-0.5f, 0.5f), Color = new Vector3D<float>(0, 0, 1) }
+	};
+
 	public void Run()
 	{
 		InitWindow();
@@ -552,107 +558,115 @@ public unsafe class HelloTriangleApplication
 
 		var shaderStages = new[] { vertShaderStageInfo, fragShaderStageInfo };
 
-		var vertexInputStateCreateInfo = new PipelineVertexInputStateCreateInfo {
-			SType = StructureType.PipelineVertexInputStateCreateInfo,
-			VertexAttributeDescriptionCount = 0,
-			VertexBindingDescriptionCount = 0
-		};
+		var bindings = Vertex.GetBindingDescription();
+		var attributes = Vertex.GetAttributeDescriptions();
 
-		var inputAssembly = new PipelineInputAssemblyStateCreateInfo {
-			SType = StructureType.PipelineInputAssemblyStateCreateInfo,
-			Topology = PrimitiveTopology.TriangleList,
-			PrimitiveRestartEnable = false
-		};
-
-		var viewport = new Viewport {
-			Height = swapchainExtent.Height,
-			Width = swapchainExtent.Width,
-			X = 0,
-			Y = 0,
-			MinDepth = 0,
-			MaxDepth = 1
-		};
-
-		var scissor = new Rect2D {
-			Offset = new Offset2D(0, 0),
-			Extent = swapchainExtent
-		};
-
-		var viewportState = new PipelineViewportStateCreateInfo {
-			SType = StructureType.PipelineViewportStateCreateInfo,
-			ScissorCount = 1,
-			PScissors = &scissor,
-			ViewportCount = 1,
-			PViewports = &viewport
-		};
-
-		var rasterizer = new PipelineRasterizationStateCreateInfo {
-			SType = StructureType.PipelineRasterizationStateCreateInfo,
-			DepthClampEnable = false,
-			RasterizerDiscardEnable = false,
-			PolygonMode = PolygonMode.Fill,
-			LineWidth = 1,
-			CullMode = CullModeFlags.BackBit,
-			FrontFace = FrontFace.Clockwise,
-			DepthBiasEnable = false
-		};
-
-		var colorBlendAttachment = new PipelineColorBlendAttachmentState {
-			ColorWriteMask = ColorComponentFlags.ABit 
-				| ColorComponentFlags.RBit
-				| ColorComponentFlags.GBit
-				| ColorComponentFlags.BBit,
-			BlendEnable = false
-		};
-		
-		var colorBlending = new PipelineColorBlendStateCreateInfo {
-			SType = StructureType.PipelineColorBlendStateCreateInfo,
-			LogicOpEnable = false,
-			LogicOp = LogicOp.Copy,
-			AttachmentCount = 1,
-			PAttachments = &colorBlendAttachment,
-		};
-
-		var sampler = new PipelineMultisampleStateCreateInfo {
-			SType = StructureType.PipelineMultisampleStateCreateInfo,
-			RasterizationSamples = SampleCountFlags.Count1Bit,
-			SampleShadingEnable = false
-		};
-
-		var pipelineLayoutInfo = new PipelineLayoutCreateInfo {
-			SType = StructureType.PipelineLayoutCreateInfo
-		};
-
-		if (vk!.CreatePipelineLayout(_device, pipelineLayoutInfo, null, out pipelineLayout) != Result.Success) {
-			throw new Exception("Failed to create pipeline layout");
-		}
-
-		var dynamicStates = stackalloc[] { DynamicState.Viewport, DynamicState.Scissor };
-		var pipelineDynamicStateInfo = new PipelineDynamicStateCreateInfo {
-			SType = StructureType.PipelineDynamicStateCreateInfo,
-			DynamicStateCount = 2,
-			PDynamicStates = dynamicStates
-		};
-		fixed (PipelineShaderStageCreateInfo* shaderStagesPointer = shaderStages) {
-			var pipelineInfo = new GraphicsPipelineCreateInfo {
-				SType = StructureType.GraphicsPipelineCreateInfo,
-				StageCount = 2,
-				PStages = shaderStagesPointer,
-				PVertexInputState = &vertexInputStateCreateInfo,
-				PInputAssemblyState = &inputAssembly,
-				PViewportState = &viewportState,
-				PRasterizationState = &rasterizer,
-				PMultisampleState = &sampler,
-				PDepthStencilState = null,
-				PColorBlendState = &colorBlending,
-				Layout = pipelineLayout,
-				RenderPass = renderPass,
-				Subpass = 0,
-				PDynamicState = &pipelineDynamicStateInfo
+		fixed (VertexInputAttributeDescription* attributesPointer = attributes) {
+			var vertexInputInfo = new PipelineVertexInputStateCreateInfo {
+				SType = StructureType.PipelineVertexInputStateCreateInfo,
+				VertexAttributeDescriptionCount = 1,
+				PVertexAttributeDescriptions = attributesPointer,
+				VertexBindingDescriptionCount = 1,
+				PVertexBindingDescriptions = &bindings
 			};
 
-			if (vk!.CreateGraphicsPipelines(_device, default, 1, &pipelineInfo, null, out graphicsPipeline) != Result.Success) {
-				throw new Exception("Failed to create graphics pipelines");
+			var inputAssembly = new PipelineInputAssemblyStateCreateInfo {
+				SType = StructureType.PipelineInputAssemblyStateCreateInfo,
+				Topology = PrimitiveTopology.TriangleList,
+				PrimitiveRestartEnable = false
+			};
+
+			var viewport = new Viewport {
+				Height = swapchainExtent.Height,
+				Width = swapchainExtent.Width,
+				X = 0,
+				Y = 0,
+				MinDepth = 0,
+				MaxDepth = 1
+			};
+
+			var scissor = new Rect2D {
+				Offset = new Offset2D(0, 0),
+				Extent = swapchainExtent
+			};
+
+			var viewportState = new PipelineViewportStateCreateInfo {
+				SType = StructureType.PipelineViewportStateCreateInfo,
+				ScissorCount = 1,
+				PScissors = &scissor,
+				ViewportCount = 1,
+				PViewports = &viewport
+			};
+
+			var rasterizer = new PipelineRasterizationStateCreateInfo {
+				SType = StructureType.PipelineRasterizationStateCreateInfo,
+				DepthClampEnable = false,
+				RasterizerDiscardEnable = false,
+				PolygonMode = PolygonMode.Fill,
+				LineWidth = 1,
+				CullMode = CullModeFlags.BackBit,
+				FrontFace = FrontFace.Clockwise,
+				DepthBiasEnable = false
+			};
+
+			var colorBlendAttachment = new PipelineColorBlendAttachmentState {
+				ColorWriteMask = ColorComponentFlags.ABit
+				                 | ColorComponentFlags.RBit
+				                 | ColorComponentFlags.GBit
+				                 | ColorComponentFlags.BBit,
+				BlendEnable = false
+			};
+
+			var colorBlending = new PipelineColorBlendStateCreateInfo {
+				SType = StructureType.PipelineColorBlendStateCreateInfo,
+				LogicOpEnable = false,
+				LogicOp = LogicOp.Copy,
+				AttachmentCount = 1,
+				PAttachments = &colorBlendAttachment,
+			};
+
+			var sampler = new PipelineMultisampleStateCreateInfo {
+				SType = StructureType.PipelineMultisampleStateCreateInfo,
+				RasterizationSamples = SampleCountFlags.Count1Bit,
+				SampleShadingEnable = false
+			};
+
+			var pipelineLayoutInfo = new PipelineLayoutCreateInfo {
+				SType = StructureType.PipelineLayoutCreateInfo
+			};
+
+			if (vk!.CreatePipelineLayout(_device, pipelineLayoutInfo, null, out pipelineLayout) != Result.Success) {
+				throw new Exception("Failed to create pipeline layout");
+			}
+
+			var dynamicStates = stackalloc[] { DynamicState.Viewport, DynamicState.Scissor };
+			var pipelineDynamicStateInfo = new PipelineDynamicStateCreateInfo {
+				SType = StructureType.PipelineDynamicStateCreateInfo,
+				DynamicStateCount = 2,
+				PDynamicStates = dynamicStates
+			};
+			fixed (PipelineShaderStageCreateInfo* shaderStagesPointer = shaderStages) {
+				var pipelineInfo = new GraphicsPipelineCreateInfo {
+					SType = StructureType.GraphicsPipelineCreateInfo,
+					StageCount = 2,
+					PStages = shaderStagesPointer,
+					PVertexInputState = &vertexInputInfo,
+					PInputAssemblyState = &inputAssembly,
+					PViewportState = &viewportState,
+					PRasterizationState = &rasterizer,
+					PMultisampleState = &sampler,
+					PDepthStencilState = null,
+					PColorBlendState = &colorBlending,
+					Layout = pipelineLayout,
+					RenderPass = renderPass,
+					Subpass = 0,
+					PDynamicState = &pipelineDynamicStateInfo
+				};
+
+				if (vk!.CreateGraphicsPipelines(_device, default, 1, &pipelineInfo, null, out graphicsPipeline) !=
+				    Result.Success) {
+					throw new Exception("Failed to create graphics pipelines");
+				}
 			}
 		}
 
