@@ -9,6 +9,7 @@ using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.EXT;
 using Silk.NET.Vulkan.Extensions.KHR;
 using Silk.NET.Windowing;
+using Buffer = Silk.NET.Vulkan.Buffer;
 
 namespace SilkTutorial; 
 
@@ -63,8 +64,11 @@ public unsafe class HelloTriangleApplication
 
 	private bool framebufferResized;
 
+	private Buffer vertexBuffer;
+	private DeviceMemory vertexBufferMemory;
+
 	private readonly Vertex[] vertices = {
-		new() { Position = new Vector2D<float>(0, -0.5f), Color = new Vector3D<float>(1, 0, 0) },
+		new() { Position = new Vector2D<float>(0, -0.5f), Color = new Vector3D<float>(1, 1, 1) },
 		new() { Position = new Vector2D<float>(0.5f, 0.5f), Color = new Vector3D<float>(0, 1, 0) },
 		new() { Position = new Vector2D<float>(-0.5f, 0.5f), Color = new Vector3D<float>(0, 0, 1) }
 	};
@@ -104,6 +108,7 @@ public unsafe class HelloTriangleApplication
 		CreateGraphicsPipeline();
 		CreateFramebuffers();
 		CreateCommandPool();
+		CreateVertexBuffer();
 		CreateCommandBuffers();
 		CreateSyncObjects();
 	}
@@ -564,7 +569,7 @@ public unsafe class HelloTriangleApplication
 		fixed (VertexInputAttributeDescription* attributesPointer = attributes) {
 			var vertexInputInfo = new PipelineVertexInputStateCreateInfo {
 				SType = StructureType.PipelineVertexInputStateCreateInfo,
-				VertexAttributeDescriptionCount = 1,
+				VertexAttributeDescriptionCount = (uint)attributes.Length,
 				PVertexAttributeDescriptions = attributesPointer,
 				VertexBindingDescriptionCount = 1,
 				PVertexBindingDescriptions = &bindings
@@ -725,6 +730,51 @@ public unsafe class HelloTriangleApplication
 		}
 	}
 
+	private void CreateVertexBuffer() {
+		var bufferCreateInfo = new BufferCreateInfo {
+			SType = StructureType.BufferCreateInfo,
+			Size = (uint)(Unsafe.SizeOf<Vertex>() * vertices.Length),
+			Usage = BufferUsageFlags.VertexBufferBit,
+			SharingMode = SharingMode.Exclusive
+		};
+
+		if (vk!.CreateBuffer(_device, bufferCreateInfo, null, out vertexBuffer) != Result.Success) {
+			throw new Exception("Failed to create Vertex Buffer");
+		}
+
+		vk!.GetBufferMemoryRequirements(_device, vertexBuffer, out var memoryRequirements);
+
+		var allocInfo = new MemoryAllocateInfo {
+			SType = StructureType.MemoryAllocateInfo,
+			AllocationSize = memoryRequirements.Size,
+			MemoryTypeIndex = FindMemoryType(memoryRequirements.MemoryTypeBits, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit)
+		};
+
+		if (vk!.AllocateMemory(_device, allocInfo, null, out vertexBufferMemory) != Result.Success) {
+			throw new Exception("Failed to create Vertex Buffer memory");
+		}
+
+		vk.BindBufferMemory(_device, vertexBuffer, vertexBufferMemory, 0);
+
+		void* data;
+		vk!.MapMemory(_device, vertexBufferMemory, 0, bufferCreateInfo.Size, 0, &data);
+		vertices.AsSpan().CopyTo(new Span<Vertex>(data, vertices.Length));
+		vk!.UnmapMemory(_device, vertexBufferMemory);
+	}
+
+	private uint FindMemoryType(uint typeFilter, MemoryPropertyFlags properties) {
+		vk!.GetPhysicalDeviceMemoryProperties(_physicalDevice, out var memoryProperties);
+
+		for (var i = 0; i < memoryProperties.MemoryTypeCount; i++) {
+			var memType = memoryProperties.MemoryTypes[i];
+			if ((typeFilter & (1 << i)) != 0 && (memType.PropertyFlags & properties) == properties) {
+				return (uint)i;
+			}
+		}
+
+		throw new Exception("Failed to find a suitable memory location");
+	}
+
 	private void CreateCommandBuffers() {
 		var commandBuffers = stackalloc CommandBuffer[renderFrames.Length];
 		var allocInfo = new CommandBufferAllocateInfo {
@@ -783,6 +833,8 @@ public unsafe class HelloTriangleApplication
 		vk!.CmdBeginRenderPass(buffer, renderPassBegin, SubpassContents.Inline);
 		vk!.CmdBindPipeline(buffer, PipelineBindPoint.Graphics, graphicsPipeline);
 
+		vk!.CmdBindVertexBuffers(buffer, 0, 1, vertexBuffer, 0);
+
 		var viewport = new Viewport {
 			Height = swapchainExtent.Height,
 			Width = swapchainExtent.Width,
@@ -799,7 +851,7 @@ public unsafe class HelloTriangleApplication
 		};
 		vk!.CmdSetScissor(buffer, 0, 1, &scissor);
 
-		vk!.CmdDraw(buffer, 3, 1, 0, 0);
+		vk!.CmdDraw(buffer, (uint)vertices.Length, 1, 0, 0);
 
 		vk!.CmdEndRenderPass(buffer);
 
@@ -875,6 +927,7 @@ public unsafe class HelloTriangleApplication
 	}
 
 	private void CleanUp() {
+		vk!.DestroyBuffer(_device, vertexBuffer, null);
 		foreach (var frame in renderFrames) {
 			vk!.DestroySemaphore(_device, frame.ImageAvailableSemaphore, null);
 			vk!.DestroySemaphore(_device, frame.RenderFinishedSemaphore, null);
@@ -887,6 +940,9 @@ public unsafe class HelloTriangleApplication
 		vk!.DestroyRenderPass(_device, renderPass, null);
 		
 		CleanupSwapchain();
+
+		vk!.DestroyBuffer(_device, vertexBuffer, null);
+		vk!.FreeMemory(_device, vertexBufferMemory, null);
 		
 		vk!.DestroyDevice(_device, null);
 		if (EnableValidationLayers) {
