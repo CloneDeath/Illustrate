@@ -54,6 +54,8 @@ public unsafe class HelloTriangleApplication
 	private PipelineLayout pipelineLayout;
 	private Pipeline graphicsPipeline;
 
+	private Framebuffer[] swapchainFramebuffers = Array.Empty<Framebuffer>();
+
 	public void Run()
 	{
 		InitWindow();
@@ -87,6 +89,7 @@ public unsafe class HelloTriangleApplication
 		CreateImageViews();
 		CreateRenderPass();
 		CreateGraphicsPipeline();
+		CreateFramebuffers();
 	}
 
 	private void CreateInstance() {
@@ -619,11 +622,35 @@ public unsafe class HelloTriangleApplication
 		}
 	}
 
+	private void CreateFramebuffers() {
+		swapchainFramebuffers = new Framebuffer[swapchainImageViews.Length];
+
+		for (var i = 0; i < swapchainImageViews.Length; i++) {
+			var imageView = swapchainImageViews[i];
+			var framebufferInfo = new FramebufferCreateInfo {
+				SType = StructureType.FramebufferCreateInfo,
+				RenderPass = renderPass,
+				AttachmentCount = 1,
+				PAttachments = &imageView,
+				Height = swapchainExtent.Height,
+				Width = swapchainExtent.Width,
+				Layers = 1
+			};
+
+			if (vk!.CreateFramebuffer(_device, framebufferInfo, null, out swapchainFramebuffers[i]) != Result.Success) {
+				throw new Exception("Failed to create framebuffer");
+			}
+		}
+	}
+
 	private void MainLoop() {
 		window!.Run();
 	}
 
 	private void CleanUp() {
+		foreach (var swapchainFramebuffer in swapchainFramebuffers) {
+			vk!.DestroyFramebuffer(_device, swapchainFramebuffer, null);
+		}
 		vk!.DestroyPipeline(_device, graphicsPipeline, null);
 		vk!.DestroyPipelineLayout(_device, pipelineLayout, null);
 		vk!.DestroyRenderPass(_device, renderPass, null);
