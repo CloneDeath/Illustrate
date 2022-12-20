@@ -56,6 +56,9 @@ public unsafe class HelloTriangleApplication
 
 	private Framebuffer[] swapchainFramebuffers = Array.Empty<Framebuffer>();
 
+	private CommandPool commandPool;
+	private CommandBuffer commandBuffer;
+
 	public void Run()
 	{
 		InitWindow();
@@ -90,6 +93,8 @@ public unsafe class HelloTriangleApplication
 		CreateRenderPass();
 		CreateGraphicsPipeline();
 		CreateFramebuffers();
+		CreateCommandPool();
+		CreateCommandBuffer();
 	}
 
 	private void CreateInstance() {
@@ -643,11 +648,85 @@ public unsafe class HelloTriangleApplication
 		}
 	}
 
+	private void CreateCommandPool() {
+		var queueFamilyIndices = FindQueueFamilies(_physicalDevice);
+
+		var commandPoolCreateInfo = new CommandPoolCreateInfo {
+			SType = StructureType.CommandPoolCreateInfo,
+			QueueFamilyIndex = queueFamilyIndices.GraphicsFamily.Value,
+			Flags = CommandPoolCreateFlags.ResetCommandBufferBit
+		};
+
+		if (vk!.CreateCommandPool(_device, commandPoolCreateInfo, null, out commandPool) != Result.Success) {
+			throw new Exception("Failed to create command pool");
+		}
+	}
+
+	private void CreateCommandBuffer() {
+		var allocInfo = new CommandBufferAllocateInfo {
+			SType = StructureType.CommandBufferAllocateInfo,
+			CommandPool = commandPool,
+			CommandBufferCount = 1,
+			Level = CommandBufferLevel.Primary
+		};
+		if (vk!.AllocateCommandBuffers(_device, allocInfo, out commandBuffer) != Result.Success) {
+			throw new Exception("Failed to create command buffer");
+		}
+	}
+
+	private void RecordCommandBuffer(CommandBuffer buffer, int index) {
+		var beginInfo = new CommandBufferBeginInfo {
+			SType = StructureType.CommandBufferBeginInfo
+		};
+		if (vk!.BeginCommandBuffer(commandBuffer, beginInfo) != Result.Success) {
+			throw new Exception("Failed to begin the command buffer");
+		}
+
+		var clearValue = new ClearValue {
+			Color = new ClearColorValue(0, 0, 0, 1)
+		};
+		var renderPassBegin = new RenderPassBeginInfo {
+			SType = StructureType.RenderPassBeginInfo,
+			RenderPass = renderPass,
+			Framebuffer = swapchainFramebuffers[index],
+			RenderArea = new Rect2D(new Offset2D(0, 0), swapchainExtent),
+			ClearValueCount = 1,
+			PClearValues = &clearValue
+		};
+		vk!.CmdBeginRenderPass(buffer, renderPassBegin, SubpassContents.Inline);
+		vk!.CmdBindPipeline(buffer, PipelineBindPoint.Graphics, graphicsPipeline);
+
+		var viewport = new Viewport {
+			Height = swapchainExtent.Height,
+			Width = swapchainExtent.Width,
+			X = 0,
+			Y = 0,
+			MaxDepth = 1,
+			MinDepth = 0
+		};
+		vk!.CmdSetViewport(buffer, 0, 1, &viewport);
+
+		var scissor = new Rect2D {
+			Offset = new Offset2D(0, 0),
+			Extent = swapchainExtent
+		};
+		vk!.CmdSetScissor(buffer, 0, 1, &scissor);
+
+		vk!.CmdDraw(commandBuffer, 3, 1, 0, 0);
+
+		vk!.CmdEndRenderPass(buffer);
+
+		if (vk!.EndCommandBuffer(buffer) != Result.Success) {
+			throw new Exception("Failed to end the command buffer");
+		}
+	}
+
 	private void MainLoop() {
 		window!.Run();
 	}
 
 	private void CleanUp() {
+		vk!.DestroyCommandPool(_device, commandPool, null);
 		foreach (var swapchainFramebuffer in swapchainFramebuffers) {
 			vk!.DestroyFramebuffer(_device, swapchainFramebuffer, null);
 		}
