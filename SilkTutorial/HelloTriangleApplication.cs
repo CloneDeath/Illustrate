@@ -61,6 +61,8 @@ public unsafe class HelloTriangleApplication
 	private readonly RenderFrame[] renderFrames = new RenderFrame[MaxFramesInFlight];
 	private int currentFrame;
 
+	private bool framebufferResized;
+
 	public void Run()
 	{
 		InitWindow();
@@ -333,6 +335,32 @@ public unsafe class HelloTriangleApplication
 		vk!.GetDeviceQueue(_device, indices.PresentFamily.Value, 0, out _presentQueue);
 
 		SilkMarshal.Free((nint)deviceCreateInfo.PpEnabledLayerNames);
+	}
+
+	private void RecreateSwapChain() {
+		Vector2D<int> framebufferSize;
+		do {
+			framebufferSize = window!.FramebufferSize;
+			window!.DoEvents();
+		} while (framebufferSize.X == 0 || framebufferSize.Y == 0);
+		
+		vk!.DeviceWaitIdle(_device);
+		
+		CleanupSwapchain();
+		
+		CreateSwapChain();
+		CreateImageViews();
+		CreateFramebuffers();
+	}
+
+	private void CleanupSwapchain() {
+		foreach (var swapchainFramebuffer in swapchainFramebuffers) {
+			vk!.DestroyFramebuffer(_device, swapchainFramebuffer, null);
+		}
+		foreach (var imageView in swapchainImageViews) {
+			vk!.DestroyImageView(_device, imageView, null);
+		}
+		_khrSwapchain!.DestroySwapchain(_device, swapchain, null);
 	}
 
 	private void CreateSwapChain() {
@@ -768,6 +796,7 @@ public unsafe class HelloTriangleApplication
 
 	private void MainLoop() {
 		window!.Render += DrawFrame;
+		window!.Resize += _ => framebufferResized = true;
 		window!.Run();
 		vk!.DeviceWaitIdle(_device);
 	}
@@ -775,11 +804,19 @@ public unsafe class HelloTriangleApplication
 	private void DrawFrame(double dt) {
 		var frame = renderFrames[currentFrame];
 		vk!.WaitForFences(_device, 1, frame.InFlightFence, true, int.MaxValue);
-		vk!.ResetFences(_device, 1, frame.InFlightFence);
 
 		uint imageIndex = 0;
-		_khrSwapchain!.AcquireNextImage(_device, swapchain, int.MaxValue, frame.ImageAvailableSemaphore, default, ref imageIndex);
-
+		var acquireResult = _khrSwapchain!.AcquireNextImage(_device, swapchain, int.MaxValue, frame.ImageAvailableSemaphore, default, ref imageIndex);
+		if (acquireResult == Result.ErrorOutOfDateKhr) {
+			RecreateSwapChain();
+			return;
+		}
+		if (acquireResult != Result.Success && acquireResult != Result.SuboptimalKhr) {
+			throw new Exception("failed to acquire next image");
+		}
+		
+		vk!.ResetFences(_device, 1, frame.InFlightFence);
+		
 		vk!.ResetCommandBuffer(frame.CommandBuffer, 0);
 		RecordCommandBuffer(frame.CommandBuffer, (int)imageIndex);
 
@@ -811,7 +848,15 @@ public unsafe class HelloTriangleApplication
 			PSwapchains = swapchains,
 			PImageIndices = &imageIndex
 		};
-		_khrSwapchain.QueuePresent(_presentQueue, presentInfo);
+		var presentResult = _khrSwapchain.QueuePresent(_presentQueue, presentInfo);
+		if (presentResult is Result.ErrorOutOfDateKhr or Result.SuboptimalKhr || framebufferResized) {
+			framebufferResized = false;
+			RecreateSwapChain();
+			return;
+		}
+		if (presentResult != Result.Success) {
+			throw new Exception("Failed to present queue");
+		}
 		currentFrame = (currentFrame + 1) % MaxFramesInFlight;
 	}
 
@@ -822,16 +867,13 @@ public unsafe class HelloTriangleApplication
 			vk!.DestroyFence(_device, frame.InFlightFence, null);
 		}
 		vk!.DestroyCommandPool(_device, commandPool, null);
-		foreach (var swapchainFramebuffer in swapchainFramebuffers) {
-			vk!.DestroyFramebuffer(_device, swapchainFramebuffer, null);
-		}
+		
 		vk!.DestroyPipeline(_device, graphicsPipeline, null);
 		vk!.DestroyPipelineLayout(_device, pipelineLayout, null);
 		vk!.DestroyRenderPass(_device, renderPass, null);
-		foreach (var imageView in swapchainImageViews) {
-			vk!.DestroyImageView(_device, imageView, null);
-		}
-		_khrSwapchain!.DestroySwapchain(_device, swapchain, null);
+		
+		CleanupSwapchain();
+		
 		vk!.DestroyDevice(_device, null);
 		if (EnableValidationLayers) {
 			debugUtils!.DestroyDebugUtilsMessenger(instance, debugMessenger, null);
