@@ -59,6 +59,10 @@ public unsafe class HelloTriangleApplication
 	private CommandPool commandPool;
 	private CommandBuffer commandBuffer;
 
+	private Semaphore imageAvailableSemaphore;
+	private Semaphore renderFinishedSemaphore;
+	private Fence inFlightFence;
+
 	public void Run()
 	{
 		InitWindow();
@@ -95,6 +99,7 @@ public unsafe class HelloTriangleApplication
 		CreateFramebuffers();
 		CreateCommandPool();
 		CreateCommandBuffer();
+		CreateSyncObjects();
 	}
 
 	private void CreateInstance() {
@@ -473,13 +478,24 @@ public unsafe class HelloTriangleApplication
 			ColorAttachmentCount = 1,
 			PColorAttachments = &colorAttachmentRef
 		};
+
+		var subpassDependency = new SubpassDependency {
+			SrcSubpass = Vk.SubpassExternal,
+			DstSubpass = 0,
+			SrcStageMask = PipelineStageFlags.ColorAttachmentOutputBit,
+			SrcAccessMask = AccessFlags.None,
+			DstStageMask = PipelineStageFlags.ColorAttachmentOutputBit,
+			DstAccessMask = AccessFlags.ColorAttachmentWriteBit
+		};
 		
 		var createInfo = new RenderPassCreateInfo {
 			SType	= StructureType.RenderPassCreateInfo,
 			AttachmentCount = 1,
 			PAttachments = &colorAttachment,
 			SubpassCount = 1,
-			PSubpasses = &subpass
+			PSubpasses = &subpass,
+			DependencyCount = 1,
+			PDependencies = &subpassDependency
 		};
 
 		if (vk!.CreateRenderPass(_device, createInfo, null, out renderPass) != Result.Success) {
@@ -653,7 +669,7 @@ public unsafe class HelloTriangleApplication
 
 		var commandPoolCreateInfo = new CommandPoolCreateInfo {
 			SType = StructureType.CommandPoolCreateInfo,
-			QueueFamilyIndex = queueFamilyIndices.GraphicsFamily.Value,
+			QueueFamilyIndex = queueFamilyIndices.GraphicsFamily!.Value,
 			Flags = CommandPoolCreateFlags.ResetCommandBufferBit
 		};
 
@@ -671,6 +687,21 @@ public unsafe class HelloTriangleApplication
 		};
 		if (vk!.AllocateCommandBuffers(_device, allocInfo, out commandBuffer) != Result.Success) {
 			throw new Exception("Failed to create command buffer");
+		}
+	}
+
+	private void CreateSyncObjects() {
+		var semaphoreInfo = new SemaphoreCreateInfo {
+			SType = StructureType.SemaphoreCreateInfo
+		};
+		var fenceInfo = new FenceCreateInfo {
+			SType = StructureType.FenceCreateInfo,
+			Flags = FenceCreateFlags.SignaledBit
+		};
+		if (vk!.CreateSemaphore(_device, semaphoreInfo, null, out imageAvailableSemaphore) != Result.Success
+		    || vk!.CreateSemaphore(_device, semaphoreInfo, null, out renderFinishedSemaphore) != Result.Success
+		    || vk!.CreateFence(_device, fenceInfo, null, out inFlightFence) != Result.Success) {
+			throw new Exception("Failed to create sync objects");
 		}
 	}
 
@@ -722,10 +753,56 @@ public unsafe class HelloTriangleApplication
 	}
 
 	private void MainLoop() {
+		window!.Render += DrawFrame;
 		window!.Run();
+		vk!.DeviceWaitIdle(_device);
+	}
+
+	private void DrawFrame(double dt) {
+		vk!.WaitForFences(_device, 1, inFlightFence, true, int.MaxValue);
+		vk!.ResetFences(_device, 1, inFlightFence);
+
+		uint imageIndex = 0;
+		_khrSwapchain!.AcquireNextImage(_device, swapchain, int.MaxValue, imageAvailableSemaphore, default, ref imageIndex);
+
+		vk!.ResetCommandBuffer(commandBuffer, 0);
+		RecordCommandBuffer(commandBuffer, (int)imageIndex);
+
+		var buffer = commandBuffer;
+		var waitSemaphores = stackalloc[] { imageAvailableSemaphore };
+		var pipelineStageFlags = stackalloc [] { PipelineStageFlags.ColorAttachmentOutputBit };
+		var signalSemaphores = stackalloc[] { renderFinishedSemaphore };
+		var submitInfo = new SubmitInfo {
+			SType = StructureType.SubmitInfo,
+			WaitSemaphoreCount = 1,
+			PWaitSemaphores = waitSemaphores,
+			PWaitDstStageMask = pipelineStageFlags,
+			CommandBufferCount = 1,
+			PCommandBuffers = &buffer,
+			SignalSemaphoreCount = 1,
+			PSignalSemaphores = signalSemaphores
+		};
+
+		if (vk!.QueueSubmit(_graphicsQueue, 1, submitInfo, inFlightFence) != Result.Success) {
+			throw new Exception("Failed to submit queue");
+		}
+
+		var swapchains = stackalloc [] { swapchain };
+		var presentInfo = new PresentInfoKHR {
+			SType = StructureType.PresentInfoKhr,
+			WaitSemaphoreCount = 1,
+			PWaitSemaphores = signalSemaphores,
+			SwapchainCount = 1,
+			PSwapchains = swapchains,
+			PImageIndices = &imageIndex
+		};
+		_khrSwapchain.QueuePresent(_presentQueue, presentInfo);
 	}
 
 	private void CleanUp() {
+		vk!.DestroySemaphore(_device, imageAvailableSemaphore, null);
+		vk!.DestroySemaphore(_device, renderFinishedSemaphore, null);
+		vk!.DestroyFence(_device, inFlightFence, null);
 		vk!.DestroyCommandPool(_device, commandPool, null);
 		foreach (var swapchainFramebuffer in swapchainFramebuffers) {
 			vk!.DestroyFramebuffer(_device, swapchainFramebuffer, null);
