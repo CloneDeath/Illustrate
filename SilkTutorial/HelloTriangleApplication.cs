@@ -14,6 +14,7 @@ namespace SilkTutorial;
 
 public unsafe class HelloTriangleApplication
 {
+	private const int MaxFramesInFlight = 2;
 	private const int WIDTH = 800;
 	private const int HEIGHT = 600;
 
@@ -57,11 +58,8 @@ public unsafe class HelloTriangleApplication
 	private Framebuffer[] swapchainFramebuffers = Array.Empty<Framebuffer>();
 
 	private CommandPool commandPool;
-	private CommandBuffer commandBuffer;
-
-	private Semaphore imageAvailableSemaphore;
-	private Semaphore renderFinishedSemaphore;
-	private Fence inFlightFence;
+	private readonly RenderFrame[] renderFrames = new RenderFrame[MaxFramesInFlight];
+	private int currentFrame;
 
 	public void Run()
 	{
@@ -98,7 +96,7 @@ public unsafe class HelloTriangleApplication
 		CreateGraphicsPipeline();
 		CreateFramebuffers();
 		CreateCommandPool();
-		CreateCommandBuffer();
+		CreateCommandBuffers();
 		CreateSyncObjects();
 	}
 
@@ -685,15 +683,22 @@ public unsafe class HelloTriangleApplication
 		}
 	}
 
-	private void CreateCommandBuffer() {
+	private void CreateCommandBuffers() {
+		var commandBuffers = stackalloc CommandBuffer[renderFrames.Length];
 		var allocInfo = new CommandBufferAllocateInfo {
 			SType = StructureType.CommandBufferAllocateInfo,
 			CommandPool = commandPool,
-			CommandBufferCount = 1,
+			CommandBufferCount = (uint)renderFrames.Length,
 			Level = CommandBufferLevel.Primary
 		};
-		if (vk!.AllocateCommandBuffers(_device, allocInfo, out commandBuffer) != Result.Success) {
+		if (vk!.AllocateCommandBuffers(_device, allocInfo, commandBuffers) != Result.Success) {
 			throw new Exception("Failed to create command buffer");
+		}
+
+		for (var i = 0; i < renderFrames.Length; i++) {
+			renderFrames[i] = new RenderFrame {
+				CommandBuffer = commandBuffers[i]
+			};
 		}
 	}
 
@@ -705,10 +710,12 @@ public unsafe class HelloTriangleApplication
 			SType = StructureType.FenceCreateInfo,
 			Flags = FenceCreateFlags.SignaledBit
 		};
-		if (vk!.CreateSemaphore(_device, semaphoreInfo, null, out imageAvailableSemaphore) != Result.Success
-		    || vk!.CreateSemaphore(_device, semaphoreInfo, null, out renderFinishedSemaphore) != Result.Success
-		    || vk!.CreateFence(_device, fenceInfo, null, out inFlightFence) != Result.Success) {
-			throw new Exception("Failed to create sync objects");
+		foreach (var frame in renderFrames) {
+			if (vk!.CreateSemaphore(_device, semaphoreInfo, null, out frame.ImageAvailableSemaphore) != Result.Success
+			    || vk!.CreateSemaphore(_device, semaphoreInfo, null, out frame.RenderFinishedSemaphore) != Result.Success
+			    || vk!.CreateFence(_device, fenceInfo, null, out frame.InFlightFence) != Result.Success) {
+				throw new Exception("Failed to create sync objects");
+			}
 		}
 	}
 
@@ -716,7 +723,7 @@ public unsafe class HelloTriangleApplication
 		var beginInfo = new CommandBufferBeginInfo {
 			SType = StructureType.CommandBufferBeginInfo
 		};
-		if (vk!.BeginCommandBuffer(commandBuffer, beginInfo) != Result.Success) {
+		if (vk!.BeginCommandBuffer(buffer, beginInfo) != Result.Success) {
 			throw new Exception("Failed to begin the command buffer");
 		}
 
@@ -750,7 +757,7 @@ public unsafe class HelloTriangleApplication
 		};
 		vk!.CmdSetScissor(buffer, 0, 1, &scissor);
 
-		vk!.CmdDraw(commandBuffer, 3, 1, 0, 0);
+		vk!.CmdDraw(buffer, 3, 1, 0, 0);
 
 		vk!.CmdEndRenderPass(buffer);
 
@@ -766,19 +773,20 @@ public unsafe class HelloTriangleApplication
 	}
 
 	private void DrawFrame(double dt) {
-		vk!.WaitForFences(_device, 1, inFlightFence, true, int.MaxValue);
-		vk!.ResetFences(_device, 1, inFlightFence);
+		var frame = renderFrames[currentFrame];
+		vk!.WaitForFences(_device, 1, frame.InFlightFence, true, int.MaxValue);
+		vk!.ResetFences(_device, 1, frame.InFlightFence);
 
 		uint imageIndex = 0;
-		_khrSwapchain!.AcquireNextImage(_device, swapchain, int.MaxValue, imageAvailableSemaphore, default, ref imageIndex);
+		_khrSwapchain!.AcquireNextImage(_device, swapchain, int.MaxValue, frame.ImageAvailableSemaphore, default, ref imageIndex);
 
-		vk!.ResetCommandBuffer(commandBuffer, 0);
-		RecordCommandBuffer(commandBuffer, (int)imageIndex);
+		vk!.ResetCommandBuffer(frame.CommandBuffer, 0);
+		RecordCommandBuffer(frame.CommandBuffer, (int)imageIndex);
 
-		var buffer = commandBuffer;
-		var waitSemaphores = stackalloc[] { imageAvailableSemaphore };
+		var buffer = frame.CommandBuffer;
+		var waitSemaphores = stackalloc[] { frame.ImageAvailableSemaphore };
 		var pipelineStageFlags = stackalloc [] { PipelineStageFlags.ColorAttachmentOutputBit };
-		var signalSemaphores = stackalloc[] { renderFinishedSemaphore };
+		var signalSemaphores = stackalloc[] { frame.RenderFinishedSemaphore };
 		var submitInfo = new SubmitInfo {
 			SType = StructureType.SubmitInfo,
 			WaitSemaphoreCount = 1,
@@ -790,7 +798,7 @@ public unsafe class HelloTriangleApplication
 			PSignalSemaphores = signalSemaphores
 		};
 
-		if (vk!.QueueSubmit(_graphicsQueue, 1, submitInfo, inFlightFence) != Result.Success) {
+		if (vk!.QueueSubmit(_graphicsQueue, 1, submitInfo, frame.InFlightFence) != Result.Success) {
 			throw new Exception("Failed to submit queue");
 		}
 
@@ -804,12 +812,15 @@ public unsafe class HelloTriangleApplication
 			PImageIndices = &imageIndex
 		};
 		_khrSwapchain.QueuePresent(_presentQueue, presentInfo);
+		currentFrame = (currentFrame + 1) % MaxFramesInFlight;
 	}
 
 	private void CleanUp() {
-		vk!.DestroySemaphore(_device, imageAvailableSemaphore, null);
-		vk!.DestroySemaphore(_device, renderFinishedSemaphore, null);
-		vk!.DestroyFence(_device, inFlightFence, null);
+		foreach (var frame in renderFrames) {
+			vk!.DestroySemaphore(_device, frame.ImageAvailableSemaphore, null);
+			vk!.DestroySemaphore(_device, frame.RenderFinishedSemaphore, null);
+			vk!.DestroyFence(_device, frame.InFlightFence, null);
+		}
 		vk!.DestroyCommandPool(_device, commandPool, null);
 		foreach (var swapchainFramebuffer in swapchainFramebuffers) {
 			vk!.DestroyFramebuffer(_device, swapchainFramebuffer, null);
