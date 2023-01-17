@@ -6,11 +6,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="VulkanSharp.Windows" Version="1.0.0.2" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\..\SpirV\SpirV\SpirV.csproj" />
     <ProjectReference Include="..\Illustrate.Vulkan\Illustrate.Vulkan.csproj" />
-    <ProjectReference Include="..\Illustrate.Windows\Illustrate.Windows.csproj" />
   </ItemGroup>
 </Project>

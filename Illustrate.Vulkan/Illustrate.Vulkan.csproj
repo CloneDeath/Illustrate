@@ -3,7 +3,4 @@
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="VulkanSharp.Windows" Version="1.0.0.2" />
-  </ItemGroup>
 </Project>

@@ -170,17 +170,9 @@ public unsafe class HelloTriangleApplication
 	}
 
 	private bool CheckValidationLayerSupport() {
-		uint layerCount = 0;
-		vk!.EnumerateInstanceLayerProperties(ref layerCount, null);
-		
-		var availableLayers = new LayerProperties[layerCount];
-		fixed (LayerProperties* availableLayersPtr = availableLayers)
-		{
-			vk!.EnumerateInstanceLayerProperties(ref layerCount, availableLayersPtr);
-		}
-
+		var availableLayers = Helpers.GetArray((ref uint length, LayerProperties* data) =>
+			vk!.EnumerateInstanceLayerProperties(ref length, data));
 		var availableLayerNames = availableLayers.Select(layer => Marshal.PtrToStringAnsi((IntPtr)layer.LayerName)).ToHashSet();
-
 		return ValidationLayers.All(availableLayerNames.Contains);
 	}
 

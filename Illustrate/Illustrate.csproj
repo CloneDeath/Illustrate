@@ -2,8 +2,13 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="VulkanSharp.Windows" Version="1.0.0.2" />
+    <PackageReference Include="Silk.NET.Input" Version="2.16.0" />
+    <PackageReference Include="Silk.NET.Vulkan" Version="2.16.0" />
+    <PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" Version="2.16.0" />
+    <PackageReference Include="Silk.NET.Vulkan.Extensions.KHR" Version="2.16.0" />
+    <PackageReference Include="Silk.NET.Windowing" Version="2.16.0" />
   </ItemGroup>
 </Project>
