@@ -13,6 +13,7 @@ namespace Illustrate;
 
 public class Texture : BaseIllustrateResource {
 	private readonly VulkanDevice _device;
+	public readonly Extent2D Size;
 	public readonly VulkanImage Image;
 	public readonly VulkanDeviceMemory ImageMemory;
 	public readonly VulkanImageView ImageView;
@@ -21,6 +22,7 @@ public class Texture : BaseIllustrateResource {
 				   ImageUsageFlags imageUsageFlags, MemoryPropertyFlags memoryPropertyFlags,
 				   ImageAspectFlags aspectFlags) {
 		_device = device;
+		Size = size;
 		var imageInfo = new ImageCreateInformation {
 			ImageType = ImageType.Type2D,
 			Extent = new Extent3D {
