@@ -34,7 +34,7 @@ public class Window : IVkSurfaceSource, IDisposable {
 	}
 
 	public IVkSurface? VkSurface => _window.VkSurface;
-	public Vector2D<int> FramebufferSize => _window.FramebufferSize;
+	public Size FramebufferSize => new Size(_window.FramebufferSize.X, _window.FramebufferSize.Y);
 
 	public event Action<double>? Render {
 		add => _window.Render += value;
