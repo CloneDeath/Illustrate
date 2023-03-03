@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Illustrate.Descriptors;
 using Illustrate.Factories;
+using Illustrate.Shaders;
 using Silk.NET.Vulkan;
 using SilkNetConvenience;
 using SilkNetConvenience.Barriers;
@@ -58,8 +59,8 @@ public class GraphicsContext : BaseIllustrateResource {
 			PresentQueue);
 	}
 
-	public GraphicsPipelineContext CreateGraphicsPipeline(byte[] vertShaderCode, byte[] fragShaderCode, Format colorFormat, Extent2D outputSize) {
-		return GraphicsPipelineContextFactory.Create(vertShaderCode, fragShaderCode, _device, colorFormat, DepthFormat, _pipelineLayout, outputSize);
+	public GraphicsPipelineContext CreateGraphicsPipeline(IEnumerable<IShaderStage> shaderStages, Format colorFormat, Extent2D outputSize) {
+		return GraphicsPipelineContextFactory.Create(shaderStages, _device, colorFormat, DepthFormat, _pipelineLayout, outputSize);
 	}
 
 	private Format DepthFormat => FindDepthFormat(_physicalDevice);

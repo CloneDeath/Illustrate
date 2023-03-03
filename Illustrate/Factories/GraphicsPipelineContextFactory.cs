@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using Illustrate.DataObjects;
+using Illustrate.Shaders;
 using Silk.NET.Vulkan;
 using SilkNetConvenience.Devices;
 using SilkNetConvenience.Pipelines;
@@ -7,11 +9,11 @@ using SilkNetConvenience.RenderPasses;
 namespace Illustrate.Factories; 
 
 public static class GraphicsPipelineContextFactory {
-	public static GraphicsPipelineContext Create(byte[] vertShaderCode, byte[] fragShaderCode, VulkanDevice device,
+	public static GraphicsPipelineContext Create(IEnumerable<IShaderStage> shaderStages, VulkanDevice device,
 												 Format colorFormat, Format depthFormat,
 												 VulkanPipelineLayout pipelineLayout, Extent2D outputSize) {
 		var renderPass = CreateRenderPass(device, colorFormat, depthFormat);
-		var pipeline = CreateGraphicsPipeline(vertShaderCode, fragShaderCode, device, renderPass, pipelineLayout, outputSize);
+		var pipeline = CreateGraphicsPipeline(shaderStages, device, renderPass, pipelineLayout, outputSize);
 		return new GraphicsPipelineContext(device, renderPass, pipelineLayout, pipeline);
 	}
 
@@ -19,22 +21,13 @@ public static class GraphicsPipelineContextFactory {
 		return RenderPassFactory.Create(device, colorFormat, depthFormat);
 	}
 
-	private static VulkanPipeline CreateGraphicsPipeline(byte[] vertShaderCode, byte[] fragShaderCode, VulkanDevice device, 
+	private static VulkanPipeline CreateGraphicsPipeline(IEnumerable<IShaderStage> shaderStages, VulkanDevice device, 
 														 VulkanRenderPass renderPass, 
 														 VulkanPipelineLayout pipelineLayout, Extent2D outputSize) {
-		using var vertShaderModule = device.CreateShaderModule(vertShaderCode);
-		using var fragShaderModule = device.CreateShaderModule(fragShaderCode);
-		
-		var pipelineInfo = new GraphicsPipelineCreateInformation {
-			Stages = new[] { new PipelineShaderStageCreateInformation {
-				Stage = ShaderStageFlags.VertexBit,
-				Module = vertShaderModule.ShaderModule,
-				Name = "main"
-			}, new PipelineShaderStageCreateInformation {
-				Stage = ShaderStageFlags.FragmentBit,
-				Module = fragShaderModule.ShaderModule,
-				Name = "main"
-			} },
+		using var stages = new ShaderStageDetailsCollection(device, shaderStages);
+
+		return device.CreateGraphicsPipeline(new GraphicsPipelineCreateInformation {
+			Stages = stages.GetCreateInformation(),
 			VertexInputState = new PipelineVertexInputStateCreateInformation {
 				VertexAttributeDescriptions = Vertex.GetAttributeDescriptions(),
 				VertexBindingDescriptions = new[] { Vertex.GetBindingDescription() }
@@ -96,8 +89,6 @@ public static class GraphicsPipelineContextFactory {
 			DynamicState = new PipelineDynamicStateCreateInformation {
 				DynamicStates = new[]{DynamicState.Viewport, DynamicState.Scissor}
 			}
-		};
-
-		return device.CreateGraphicsPipeline(pipelineInfo);
+		});
 	}
 }
