@@ -1,3 +1,4 @@
+using Illustrate.Descriptors;
 using Silk.NET.Vulkan;
 using SilkNetConvenience.Buffers;
 using SilkNetConvenience.CommandBuffers;
@@ -12,13 +13,16 @@ namespace Illustrate;
 public class GraphicsPipelineContext {
 	private readonly VulkanDevice _device;
 	private readonly VulkanRenderPass _renderPass;
+	private readonly DescriptorManager _descriptorManager;
 	private readonly VulkanPipelineLayout _pipelineLayout;
 	private readonly VulkanPipeline _pipeline;
 
 	public GraphicsPipelineContext(VulkanDevice device, VulkanRenderPass renderPass,
-								   VulkanPipelineLayout pipelineLayout, VulkanPipeline pipeline) {
+								   DescriptorManager descriptorManager, VulkanPipelineLayout pipelineLayout, 
+								   VulkanPipeline pipeline) {
 		_device = device;
 		_renderPass = renderPass;
+		_descriptorManager = descriptorManager;
 		_pipelineLayout = pipelineLayout;
 		_pipeline = pipeline;
 	}
@@ -34,7 +38,7 @@ public class GraphicsPipelineContext {
 		});
 	}
 
-	public void BeginRenderPass(VulkanCommandBuffer cmd, VulkanFramebuffer framebuffer, VulkanSampler sampler, Extent2D outputSize) {
+	public void BeginRenderPass(VulkanCommandBuffer cmd, VulkanFramebuffer framebuffer, Extent2D outputSize) {
 		var colorClear = new ClearValue {
 			Color = new ClearColorValue(0, 0, 0, 1)
 		};
@@ -68,5 +72,9 @@ public class GraphicsPipelineContext {
 
 	public void BindDescriptorSet(VulkanCommandBuffer cmd, VulkanDescriptorSet set) {
 		cmd.BindDescriptorSet(PipelineBindPoint.Graphics, _pipelineLayout, 0, set);
+	}
+	
+	public VulkanDescriptorSet UpdateDescriptorSet(uint frameIndex, VulkanBuffer buffer, VulkanImageView imageView, VulkanSampler sampler, uint range) {
+		return _descriptorManager.UpdateDescriptorSet(frameIndex, buffer, imageView, sampler, range);
 	}
 }

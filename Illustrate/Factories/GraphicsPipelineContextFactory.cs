@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Illustrate.DataObjects;
+using Illustrate.Descriptors;
 using Illustrate.Shaders;
 using Silk.NET.Vulkan;
 using SilkNetConvenience.Devices;
@@ -9,12 +10,13 @@ using SilkNetConvenience.RenderPasses;
 namespace Illustrate.Factories; 
 
 public static class GraphicsPipelineContextFactory {
-	public static GraphicsPipelineContext Create(IEnumerable<IShaderStage> shaderStages, VulkanDevice device,
-												 Format colorFormat, Format depthFormat,
-												 VulkanPipelineLayout pipelineLayout, Extent2D outputSize) {
+	public static GraphicsPipelineContext Create(IPipelineDetails details, VulkanDevice device,
+												 Format colorFormat, Format depthFormat, Extent2D outputSize) {
+		var descriptorManager = new DescriptorManager(device, details.UniformDetails);
+		var pipelineLayout = device.CreatePipelineLayout(descriptorManager.DescriptorSetLayout);
 		var renderPass = CreateRenderPass(device, colorFormat, depthFormat);
-		var pipeline = CreateGraphicsPipeline(shaderStages, device, renderPass, pipelineLayout, outputSize);
-		return new GraphicsPipelineContext(device, renderPass, pipelineLayout, pipeline);
+		var pipeline = CreateGraphicsPipeline(details.Stages, device, renderPass, pipelineLayout, outputSize);
+		return new GraphicsPipelineContext(device, renderPass, descriptorManager, pipelineLayout, pipeline);
 	}
 
 	public static VulkanRenderPass CreateRenderPass(VulkanDevice device, Format colorFormat, Format depthFormat) {

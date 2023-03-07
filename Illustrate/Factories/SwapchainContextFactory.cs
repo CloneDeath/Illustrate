@@ -16,7 +16,7 @@ public static class SwapchainContextFactory {
 		var swapchain = CreateSwapchain(support, queueFamilies, surface, device, extent, format);
 		var images = swapchain.GetImages();
 		var imageViews = CreateImageViews(device, images, format);
-		return new SwapchainContext(device, swapchain, extent, format, images, imageViews, presentQueue);
+		return new SwapchainContext(device, swapchain, extent, format, imageViews, presentQueue);
 	}
 
 	private static Extent2D ChooseSwapExtent(SurfaceCapabilitiesKHR capabilities, Extent2D size) {

@@ -1,19 +1,15 @@
 using System;
 using System.Collections.Generic;
-using Illustrate.Descriptors;
 using Illustrate.Factories;
 using Illustrate.Shaders;
 using Silk.NET.Vulkan;
 using SilkNetConvenience;
 using SilkNetConvenience.Barriers;
-using SilkNetConvenience.Buffers;
 using SilkNetConvenience.CommandBuffers;
-using SilkNetConvenience.Descriptors;
 using SilkNetConvenience.Devices;
 using SilkNetConvenience.Images;
 using SilkNetConvenience.Instances;
 using SilkNetConvenience.KHR;
-using SilkNetConvenience.Pipelines;
 using SilkNetConvenience.Queues;
 
 namespace Illustrate; 
@@ -26,8 +22,6 @@ public class GraphicsContext : BaseIllustrateResource {
 	private readonly QueueFamilyIndices _queueFamilyIndices;
 	private readonly SwapchainSupportDetails? _swapchainSupport;
 	private readonly VulkanDevice _device;
-	private readonly DescriptorManager _descriptorManager;
-	private readonly VulkanPipelineLayout _pipelineLayout;
 
 
 	public GraphicsContext(VulkanContext vulkan, VulkanInstance instance, VulkanSurface? surface,
@@ -40,8 +34,6 @@ public class GraphicsContext : BaseIllustrateResource {
 		_queueFamilyIndices = queueFamilyIndices;
 		_swapchainSupport = swapchainSupportDetails;
 		_device = device;
-		_descriptorManager = new DescriptorManager(device);
-		_pipelineLayout = device.CreatePipelineLayout(_descriptorManager.DescriptorSetLayout);
 	}
 
 	protected override void ReleaseVulkanResources() {
@@ -59,8 +51,8 @@ public class GraphicsContext : BaseIllustrateResource {
 			PresentQueue);
 	}
 
-	public GraphicsPipelineContext CreateGraphicsPipeline(IEnumerable<IShaderStage> shaderStages, Format colorFormat, Extent2D outputSize) {
-		return GraphicsPipelineContextFactory.Create(shaderStages, _device, colorFormat, DepthFormat, _pipelineLayout, outputSize);
+	public GraphicsPipelineContext CreateGraphicsPipeline(IPipelineDetails details, Format colorFormat, Extent2D outputSize) {
+		return GraphicsPipelineContextFactory.Create(details, _device, colorFormat, DepthFormat, outputSize);
 	}
 
 	private Format DepthFormat => FindDepthFormat(_physicalDevice);
@@ -127,10 +119,6 @@ public class GraphicsContext : BaseIllustrateResource {
 	public VulkanSemaphore CreateSemaphore() => _device.CreateSemaphore();
 
 	public VulkanFence CreateFence(FenceCreateFlags flags = FenceCreateFlags.None) => _device.CreateFence(flags);
-
-	public VulkanDescriptorSet UpdateDescriptorSet(uint frameIndex, VulkanBuffer buffer, VulkanImageView imageView, VulkanSampler sampler) {
-		return _descriptorManager.UpdateDescriptorSet(frameIndex, buffer, imageView, sampler);
-	}
 
 	public BufferMemory CreateBufferMemory(uint size, BufferUsageFlags usage, MemoryPropertyFlags properties) {
 		return new BufferMemory(_device, size, usage, properties);

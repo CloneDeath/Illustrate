@@ -1,4 +1,5 @@
-using Illustrate.DataObjects;
+using System.Linq;
+using Illustrate.Shaders;
 using Silk.NET.Vulkan;
 using SilkNetConvenience.Buffers;
 using SilkNetConvenience.Descriptors;
@@ -12,44 +13,32 @@ public class DescriptorManager {
 	public VulkanDescriptorSetLayout DescriptorSetLayout { get; }
 	private readonly DescriptorCollection<DescriptorKey> _descriptors;
 
-	public DescriptorManager(VulkanDevice device) {
+	public DescriptorManager(VulkanDevice device, IUniformDetails[] uniformDetails) {
 		_device = device;
 		const uint maxPoolSize = 100;
+		var poolSizes = uniformDetails.Select(d => new DescriptorPoolSize {
+			Type = d.Type,
+			DescriptorCount = maxPoolSize
+		}).ToArray();
 		var descriptorPool = device.CreateDescriptorPool(new DescriptorPoolCreateInformation {
-			PoolSizes = new [] {
-				new DescriptorPoolSize {
-					Type = DescriptorType.UniformBuffer,
-					DescriptorCount = maxPoolSize
-				},
-				new DescriptorPoolSize {
-					Type = DescriptorType.CombinedImageSampler,
-					DescriptorCount = maxPoolSize
-				}
-			},
+			PoolSizes = poolSizes,
 			MaxSets = maxPoolSize
 		});
 
+		var bindings = uniformDetails.Select(d => new DescriptorSetLayoutBindingInformation {
+			Binding = d.Binding,
+			DescriptorType = d.Type,
+			StageFlags = d.Stages,
+			DescriptorCount = 1
+		}).ToArray();
 		DescriptorSetLayout = device.CreateDescriptorSetLayout(new DescriptorSetLayoutCreateInformation {
-			Bindings = new[] {
-				new() {
-					Binding = 0,
-					DescriptorType = DescriptorType.UniformBuffer,
-					DescriptorCount = 1,
-					StageFlags = ShaderStageFlags.VertexBit
-				},
-				new DescriptorSetLayoutBindingInformation {
-					Binding = 1,
-					DescriptorCount = 1,
-					DescriptorType = DescriptorType.CombinedImageSampler,
-					StageFlags = ShaderStageFlags.FragmentBit
-				}
-			}
+			Bindings = bindings
 		});
 
 		_descriptors = new DescriptorCollection<DescriptorKey>(descriptorPool, DescriptorSetLayout);
 	}
 
-	public unsafe VulkanDescriptorSet UpdateDescriptorSet(uint frameIndex, VulkanBuffer buffer, VulkanImageView imageView, VulkanSampler sampler) {
+	public VulkanDescriptorSet UpdateDescriptorSet(uint frameIndex, VulkanBuffer buffer, VulkanImageView imageView, VulkanSampler sampler, uint range) {
 		var key = new DescriptorKey {
 			FrameIndex = frameIndex,
 			ImageView = imageView,
@@ -66,7 +55,7 @@ public class DescriptorManager {
 				new DescriptorBufferInfo {
 					Buffer = buffer,
 					Offset = 0,
-					Range = (uint)sizeof(UniformBufferObject)
+					Range = range
 				}
 			}
 		};

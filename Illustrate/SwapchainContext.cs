@@ -11,17 +11,15 @@ public class SwapchainContext : BaseIllustrateResource {
 	private readonly VulkanSwapchain _swapchain;
 	public readonly Format ColorFormat;
 	public readonly Extent2D OutputSize;
-	private readonly VulkanSwapchainImage[] _images;
 	public readonly VulkanImageView[] ImageViews;
 	private readonly VulkanQueue _presentQueue;
 
 	public SwapchainContext(VulkanDevice device, VulkanSwapchain swapchain, Extent2D outputSize, Format format,
-							VulkanSwapchainImage[] images, VulkanImageView[] imageViews, VulkanQueue presentQueue) {
+							VulkanImageView[] imageViews, VulkanQueue presentQueue) {
 		_device = device;
 		_swapchain = swapchain;
 		OutputSize = outputSize;
 		ColorFormat = format;
-		_images = images;
 		ImageViews = imageViews;
 		_presentQueue = presentQueue;
 	}
